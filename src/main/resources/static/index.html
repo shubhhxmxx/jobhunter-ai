@@ -77,6 +77,12 @@ button:disabled{opacity:.45;cursor:not-allowed}
     <div id="resumes" class="hint"></div>
   </section>
 
+  <section class="card" data-needs-key id="insights" hidden>
+    <h2>From your resume</h2>
+    <div id="insightBody"></div>
+    <button class="secondary" id="useRoles">Use these as my targets</button>
+  </section>
+
   <section class="card" data-needs-key>
     <h2>What you want</h2>
     <label for="titles">Target titles (one per line)</label><textarea id="titles" rows="3" placeholder="Backend Engineer"></textarea>
@@ -110,6 +116,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
       <input id="threshold" type="range" min="0" max="100" step="5" value="60" aria-describedby="thVal">
       <output id="thVal">60</output>
     </div>
+    <p class="hint">Scores above 80 are rare. Start around 50 to 60 and raise it if the list is too long.</p>
     <p class="hint" id="runState" role="status" aria-live="polite">No search run yet.</p>
   </section>
   <section class="card" data-needs-key>
@@ -157,15 +164,38 @@ $("setupBtn").onclick = guard(async () => {
 $("haveKey").onclick = e => { e.preventDefault(); const k = prompt("Paste your API key"); if (k) { key = k.trim(); localStorage.setItem("jh_key", key); render(); guard(loadAll)(); } };
 $("signout").onclick = () => { localStorage.removeItem("jh_key"); key = ""; $("keyCard").hidden = true; render(); };
 
+let latest = null;
+function renderInsights(r){
+  latest = r;
+  $("insights").hidden = !r;
+  if (!r) return;
+  const p = r.parsed, chips = (a, c) => (a||[]).map(x => `<span class="chip ${c}">${esc(x)}</span>`).join("");
+  $("insightBody").innerHTML =
+    `<p style="margin:.2rem 0"><strong>${p.yearsExperience ? "About " + p.yearsExperience + " years" : "Experience not detected"}</strong>${p.seniority ? ", " + esc(p.seniority) : ""}</p>` +
+    ((p.suggestedRoles||[]).length ? `<h4 style="margin:.7rem 0 .2rem;font-size:.9rem">Roles that fit</h4><div class="chips">${chips(p.suggestedRoles,"ok")}</div>`
+      : `<p class="hint">Not enough recognized skills to suggest roles. Add titles yourself below.</p>`) +
+    `<h4 style="margin:.7rem 0 .2rem;font-size:.9rem">Skills found (${(p.skills||[]).length})</h4><div class="chips">${chips(p.skills,"")}</div>` +
+    `<p class="hint">Estimated from dates and keywords on the resume, so check it.</p>`;
+  $("useRoles").hidden = !(p.suggestedRoles||[]).length;
+}
+function applySuggestions(onlyIfEmpty){
+  if (!latest) return;
+  const p = latest.parsed;
+  if ((!onlyIfEmpty || !$("titles").value.trim()) && (p.suggestedRoles||[]).length) $("titles").value = p.suggestedRoles.join("\n");
+  if ((!onlyIfEmpty || $("yearsExperience").value === "") && p.yearsExperience) $("yearsExperience").value = p.yearsExperience;
+}
 async function loadResumes(){
   const rs = await api("/resumes");
-  $("resumes").innerHTML = rs.length ? rs.map(r => `Version ${r.version}: ${esc(r.filename)} (${(r.parsed.skills||[]).length} skills found${r.parsed.yearsExperience ? ", "+r.parsed.yearsExperience+"+ years" : ""})`).join("<br>") : "No resume uploaded yet.";
+  $("resumes").innerHTML = rs.length ? rs.map(r => `Version ${r.version}: ${esc(r.filename)}`).join("<br>") : "No resume uploaded yet.";
+  renderInsights(rs[0] || null);
 }
+$("useRoles").onclick = () => { applySuggestions(false); toast("Filled in. Review, then save preferences."); };
 $("uploadBtn").onclick = guard(async () => {
   const f = $("file").files[0]; if (!f) throw new Error("Choose a PDF first");
   const fd = new FormData(); fd.append("file", f);
   await api("/resumes", {method:"POST", body: fd});
-  $("file").value = ""; await loadResumes(); toast("Resume uploaded");
+  $("file").value = ""; await loadResumes(); applySuggestions(true);
+  toast("Resume uploaded. Check the suggested titles, then save preferences.");
 });
 
 async function loadPrefs(){
@@ -231,7 +261,7 @@ function jobHtml(j){
     </div></details>`;
 }
 
-async function loadAll(){ await Promise.all([loadResumes(), loadPrefs(), loadLlm()]); await loadJobs(); }
+async function loadAll(){ await loadPrefs(); await Promise.all([loadResumes(), loadLlm()]); await loadJobs(); }
 render(); if (key) guard(loadAll)();
 </script>
 </body>

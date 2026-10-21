@@ -3,6 +3,7 @@ package com.jobhunter;
 import com.jobhunter.domain.*;
 import org.junit.jupiter.api.Test;
 
+import java.time.YearMonth;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -84,5 +85,25 @@ class DomainTest {
 
     @Test void stripsHtml() {
         assertEquals("Hello & world\nNext", JobNormalizer.stripHtml("<p>Hello &amp; <b>world</b></p><p>Next</p>"));
+    }
+
+    @Test void estimatesYearsFromDateRangesAndIgnoresEducation() {
+        String cv = "Experience\nEngineer, Infosys Aug 2023 - Dec 2025\nEngineer, Flipkart Mar 2026 - Present\n"
+                + "Education\nB.Tech Aug 2019 - May 2023\n";
+        ParsedResume r = ResumeParser.parse(cv, YearMonth.of(2026, 10));
+        assertEquals(3, r.yearsExperience());
+        assertEquals("Mid-level", r.seniority());
+    }
+
+    @Test void overlappingRangesAreMerged() {
+        assertEquals(2, ExperienceEstimator.estimateYears("Jan 2023 - Dec 2023 and Jun 2023 - Dec 2024", YearMonth.of(2026, 1)));
+    }
+
+    @Test void suggestsRolesFromSkills() {
+        ParsedResume r = ResumeParser.parse(RESUME);
+        assertTrue(r.suggestedRoles().contains("Backend Engineer"));
+        assertTrue(r.suggestedRoles().contains("Java Developer"));
+        assertFalse(r.suggestedRoles().contains("Frontend Engineer"));
+        assertTrue(RoleSuggester.suggest(List.of()).isEmpty());
     }
 }
