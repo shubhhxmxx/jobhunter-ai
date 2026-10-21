@@ -1,0 +1,19 @@
+spring:
+  application.name: jobhunter-ai
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/jobhunter}
+    username: ${DB_USER:jobhunter}
+    password: ${DB_PASSWORD:jobhunter}
+  servlet.multipart:
+    max-file-size: 5MB
+    max-request-size: 6MB
+  jackson.default-property-inclusion: non_null
+server:
+  error.include-message: never
+  error.include-stacktrace: never
+jobhunter:
+  encryption-key: ${JOBHUNTER_ENCRYPTION_KEY:}
+  sources:
+    fixtures-enabled: ${JOBHUNTER_FIXTURES:true}
+    remotive-enabled: ${JOBHUNTER_REMOTIVE:true}
+    arbeitnow-enabled: ${JOBHUNTER_ARBEITNOW:true}

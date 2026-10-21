@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:jobhunter;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+jobhunter:
+  encryption-key: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+  sources:
+    fixtures-enabled: true
+    remotive-enabled: false
+    arbeitnow-enabled: false

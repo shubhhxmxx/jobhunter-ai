@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JobHunter AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#e8edf1;--card:#fff;--ink:#10212f;--mute:#5b6b78;--line:#cdd6dd;--pine:#1f6f5c;--pine-bg:#dcefe9;--brick:#a8402c;--brick-bg:#f6e2dd;--amber:#8a6100;--amber-bg:#f8edcf;--blue:#1d4ed8}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1820;--card:#16242f;--ink:#e6edf2;--mute:#97a8b5;--line:#2a3b48;--pine:#6fd0b4;--pine-bg:#173b32;--brick:#f09a88;--brick-bg:#3b1f1a;--amber:#e8c15a;--amber-bg:#3a2f12;--blue:#8fb0ff}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Schibsted Grotesk",system-ui,sans-serif}
+h1,h2,h3{margin:0;line-height:1.15}
+h1{font-size:1.5rem;font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.05rem;font-weight:700;margin-bottom:.75rem}
+header{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem clamp(1rem,3vw,2rem);border-bottom:1px solid var(--line)}
+header small{color:var(--mute)}
+main{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:1.25rem;padding:1.25rem clamp(1rem,3vw,2rem);max-width:1200px;margin:auto}
+@media (max-width:860px){main{grid-template-columns:1fr}}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin-bottom:1rem}
+label{display:block;font-size:.9rem;font-weight:500;margin:.7rem 0 .25rem}
+input[type=text],input[type=email],input[type=number],input[type=password],textarea,select{width:100%;padding:.55rem .65rem;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit}
+input:focus-visible,button:focus-visible,summary:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:1px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+button{font:inherit;font-weight:700;border:0;border-radius:6px;padding:.6rem 1rem;background:var(--ink);color:var(--bg);cursor:pointer;margin-top:.9rem}
+button.secondary{background:transparent;color:var(--ink);border:1px solid var(--line)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.hint{color:var(--mute);font-size:.85rem;margin:.3rem 0 0}
+.chips{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.4rem}
+.chip{font-size:.8rem;padding:.1rem .5rem;border-radius:99px;border:1px solid var(--line)}
+.chip.ok{background:var(--pine-bg);color:var(--pine);border-color:transparent}
+.chip.miss{background:var(--brick-bg);color:var(--brick);border-color:transparent}
+.chip.fixture{background:var(--amber-bg);color:var(--amber);border-color:transparent;font-weight:700}
+.keybox{background:var(--amber-bg);color:var(--ink);padding:.6rem;border-radius:6px;word-break:break-all;font-family:ui-monospace,monospace;font-size:.85rem}
+.job{border-top:1px solid var(--line);padding:.9rem 0}
+.job:first-child{border-top:0}
+.job summary{cursor:pointer;list-style:none;display:grid;grid-template-columns:auto 1fr;gap:.9rem;align-items:center}
+.job summary::-webkit-details-marker{display:none}
+.score{width:3.4rem;height:3.4rem;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:1.15rem;background:conic-gradient(var(--pine) calc(var(--s)*1%),var(--line) 0);position:relative}
+.score span{position:absolute;inset:.28rem;border-radius:50%;background:var(--card);display:grid;place-items:center}
+.job h3{font-size:1rem}
+.meta{color:var(--mute);font-size:.88rem}
+.detail{padding:.8rem 0 0 4.3rem;font-size:.92rem}
+.detail h4{margin:.8rem 0 .2rem;font-size:.9rem}
+.detail blockquote{margin:.25rem 0;padding-left:.7rem;border-left:3px solid var(--line);color:var(--mute)}
+.detail a{color:var(--blue)}
+@media (max-width:520px){.detail{padding-left:0}}
+#toast{position:fixed;left:50%;bottom:1rem;transform:translateX(-50%);max-width:90vw;background:var(--brick);color:#fff;padding:.6rem 1rem;border-radius:8px;display:none}
+.empty{color:var(--mute);padding:1.5rem 0}
+.bar{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
+.bar output{font-weight:700;min-width:2.2rem}
+@media (prefers-reduced-motion:no-preference){.score{transition:background .4s}}
+</style>
+</head>
+<body>
+<header><div><h1>JobHunter AI</h1><small>Find jobs that fit your resume, with the reasoning shown.</small></div><button class="secondary" id="signout" hidden>Sign out</button></header>
+<main>
+<div>
+  <section class="card" id="setup">
+    <h2>Create your profile</h2>
+    <label for="name">Name</label><input id="name" type="text" autocomplete="name">
+    <label for="email">Email</label><input id="email" type="email" autocomplete="email">
+    <button id="setupBtn">Create profile</button>
+    <p class="hint">Already have a key? <a href="#" id="haveKey">Paste it here</a>.</p>
+  </section>
+  <section class="card" id="keyCard" hidden>
+    <h2>Your API key</h2>
+    <div class="keybox" id="keyShown"></div>
+    <p class="hint">Shown once. The browser stores it so you stay signed in; the server keeps only a hash.</p>
+  </section>
+
+  <section class="card" data-needs-key>
+    <h2>Resume</h2>
+    <input id="file" type="file" accept="application/pdf" aria-label="Resume PDF">
+    <button id="uploadBtn">Upload PDF</button>
+    <div id="resumes" class="hint"></div>
+  </section>
+
+  <section class="card" data-needs-key>
+    <h2>What you want</h2>
+    <label for="titles">Target titles (one per line)</label><textarea id="titles" rows="3" placeholder="Backend Engineer"></textarea>
+    <label for="locations">Locations (one per line)</label><textarea id="locations" rows="2" placeholder="Bengaluru"></textarea>
+    <label><input type="checkbox" id="remoteOk" checked> Include remote roles</label>
+    <div class="row">
+      <div><label for="yearsExperience">Your years of experience</label><input id="yearsExperience" type="number" min="0" max="50"></div>
+      <div><label for="salaryFloor">Salary floor</label><input id="salaryFloor" type="number" min="0"></div>
+      <div><label for="minYears">Job requires at least (years)</label><input id="minYears" type="number" min="0" max="50"></div>
+      <div><label for="maxYears">Job requires at most (years)</label><input id="maxYears" type="number" min="0" max="50"></div>
+    </div>
+    <p class="hint">Salary floor is compared to listed figures as-is; currencies are not converted.</p>
+    <button id="savePrefs">Save preferences</button>
+  </section>
+
+  <section class="card" data-needs-key>
+    <h2>AI provider (optional)</h2>
+    <p class="hint" id="llmState">Matching works without a key. A key is only stored for upcoming drafting features.</p>
+    <label for="provider">Provider</label><select id="provider"><option value="anthropic">anthropic</option></select>
+    <label for="model">Model</label><input id="model" type="text" value="claude-sonnet-4-5">
+    <label for="apiKey">API key</label><input id="apiKey" type="password" autocomplete="off">
+    <button class="secondary" id="saveLlm">Save key</button>
+  </section>
+</div>
+
+<div>
+  <section class="card" data-needs-key>
+    <div class="bar">
+      <button id="runBtn" style="margin-top:0">Search for jobs</button>
+      <label for="threshold" style="margin:0">Minimum match</label>
+      <input id="threshold" type="range" min="0" max="100" step="5" value="60" aria-describedby="thVal">
+      <output id="thVal">60</output>
+    </div>
+    <p class="hint" id="runState" role="status" aria-live="polite">No search run yet.</p>
+  </section>
+  <section class="card" data-needs-key>
+    <h2>Ranked matches</h2>
+    <div id="jobs"><div class="empty">Upload a resume, set your preferences, then search.</div></div>
+  </section>
+</div>
+</main>
+<div id="toast" role="alert"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let key = localStorage.getItem("jh_key") || "";
+
+function toast(msg){const t=$("toast");t.textContent=msg;t.style.display="block";clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display="none",5000)}
+async function api(path, opts={}){
+  const headers = Object.assign({}, opts.headers, key ? {"X-API-Key": key} : {});
+  if (opts.json) { headers["Content-Type"]="application/json"; opts.body=JSON.stringify(opts.json); }
+  const res = await fetch("/api/v1"+path, {...opts, headers});
+  const text = await res.text();
+  let data = null; try { data = text ? JSON.parse(text) : null } catch {}
+  if (!res.ok) {
+    const detail = data && data.details ? " " + Object.values(data.details).join("; ") : "";
+    throw new Error(((data && data.message) || "Request failed ("+res.status+")") + detail);
+  }
+  return data;
+}
+const guard = fn => async (...a) => { try { await fn(...a) } catch (e) { toast(e.message) } };
+const lines = s => s.split("\n").map(x=>x.trim()).filter(Boolean);
+const numOrNull = id => $(id).value === "" ? null : Number($(id).value);
+
+function render(){
+  const signedIn = !!key;
+  document.querySelectorAll("[data-needs-key]").forEach(e => e.hidden = !signedIn);
+  $("setup").hidden = signedIn; $("signout").hidden = !signedIn;
+}
+
+$("setupBtn").onclick = guard(async () => {
+  const r = await api("/setup", {method:"POST", json:{name:$("name").value, email:$("email").value}});
+  key = r.apiKey; localStorage.setItem("jh_key", key);
+  $("keyShown").textContent = key; $("keyCard").hidden = false;
+  render(); await loadAll();
+});
+$("haveKey").onclick = e => { e.preventDefault(); const k = prompt("Paste your API key"); if (k) { key = k.trim(); localStorage.setItem("jh_key", key); render(); guard(loadAll)(); } };
+$("signout").onclick = () => { localStorage.removeItem("jh_key"); key = ""; $("keyCard").hidden = true; render(); };
+
+async function loadResumes(){
+  const rs = await api("/resumes");
+  $("resumes").innerHTML = rs.length ? rs.map(r => `Version ${r.version}: ${esc(r.filename)} (${(r.parsed.skills||[]).length} skills found${r.parsed.yearsExperience ? ", "+r.parsed.yearsExperience+"+ years" : ""})`).join("<br>") : "No resume uploaded yet.";
+}
+$("uploadBtn").onclick = guard(async () => {
+  const f = $("file").files[0]; if (!f) throw new Error("Choose a PDF first");
+  const fd = new FormData(); fd.append("file", f);
+  await api("/resumes", {method:"POST", body: fd});
+  $("file").value = ""; await loadResumes(); toast("Resume uploaded");
+});
+
+async function loadPrefs(){
+  const p = await api("/preferences");
+  $("titles").value = p.targetTitles.join("\n"); $("locations").value = p.locations.join("\n");
+  $("remoteOk").checked = p.remoteOk;
+  for (const k of ["yearsExperience","salaryFloor","minYears","maxYears"]) $(k).value = p[k] ?? "";
+  $("threshold").value = p.minMatchScore; $("thVal").textContent = p.minMatchScore;
+}
+$("savePrefs").onclick = guard(async () => {
+  await api("/preferences", {method:"PUT", json:{targetTitles:lines($("titles").value), locations:lines($("locations").value),
+    remoteOk:$("remoteOk").checked, yearsExperience:numOrNull("yearsExperience"), salaryFloor:numOrNull("salaryFloor"),
+    minYears:numOrNull("minYears"), maxYears:numOrNull("maxYears")}});
+  toast("Preferences saved. Run a search to apply them.");
+});
+
+let thTimer;
+$("threshold").oninput = () => { $("thVal").textContent = $("threshold").value; clearTimeout(thTimer);
+  thTimer = setTimeout(guard(async () => { await api("/settings/matching", {method:"PUT", json:{minMatchScore:Number($("threshold").value)}}); await loadJobs(); }), 400); };
+
+async function loadLlm(){
+  const s = await api("/settings/llm");
+  $("llmState").textContent = s.configured ? `Saved: ${s.provider}, ${s.model}, key ending ${s.keyHint.replace("...","")}` : "Matching works without a key. A key is only stored for upcoming drafting features.";
+}
+$("saveLlm").onclick = guard(async () => {
+  await api("/settings/llm", {method:"PUT", json:{provider:$("provider").value, model:$("model").value, apiKey:$("apiKey").value}});
+  $("apiKey").value = ""; await loadLlm(); toast("Key saved (encrypted)");
+});
+
+$("runBtn").onclick = guard(async () => {
+  $("runBtn").disabled = true;
+  try {
+    let run = await api("/search-runs", {method:"POST"});
+    while (run.status === "QUEUED" || run.status === "RUNNING") {
+      $("runState").textContent = "Searching… " + run.status.toLowerCase();
+      await new Promise(r => setTimeout(r, 1200));
+      run = await api("/search-runs/" + run.id);
+    }
+    const failed = run.sources.filter(s => s.status === "FAILED").map(s => `${s.source}: ${s.error}`);
+    $("runState").textContent = run.status === "FAILED" ? "Search failed. " + (run.error||"") + " " + failed.join(" ")
+      : `Found ${run.jobsFound} jobs, ${run.jobsMatched} match at ${run.minScore}+.` + (failed.length ? " Some sources failed: " + failed.join(" ") : "");
+    await loadJobs();
+  } finally { $("runBtn").disabled = false; }
+});
+
+async function loadJobs(){
+  const jobs = await api("/jobs?limit=50");
+  $("jobs").innerHTML = jobs.length ? jobs.map(jobHtml).join("") : '<div class="empty">No matches at this threshold. Lower the minimum match, widen your titles, or run a search.</div>';
+}
+function jobHtml(j){
+  const m = j.match;
+  const chips = (arr, cls) => arr.map(s => `<span class="chip ${cls}">${esc(s)}</span>`).join("");
+  return `<details class="job"><summary>
+    <div class="score" style="--s:${m.score}"><span>${m.score}</span></div>
+    <div><h3>${esc(j.title)} ${j.fixture ? '<span class="chip fixture">Fixture</span>' : ""}</h3>
+    <div class="meta">${esc(j.company)}, ${esc(j.remote ? (j.location || "Remote") + " (remote)" : j.location || "Location not listed")}</div></div></summary>
+    <div class="detail">
+      <h4>Matched skills</h4><div class="chips">${chips(m.matchedSkills,"ok") || '<span class="hint">None recognized</span>'}</div>
+      <h4>Missing from your resume</h4><div class="chips">${chips(m.missingRequirements,"miss") || '<span class="hint">Nothing missing</span>'}</div>
+      ${m.evidence.length ? "<h4>Evidence in the posting</h4>" + m.evidence.map(e => `<blockquote>${esc(e)}</blockquote>`).join("") : ""}
+      ${m.uncertainty.length ? "<h4>What we couldn't tell</h4>" + m.uncertainty.map(u => `<div class="hint">${esc(u)}</div>`).join("") : ""}
+      <p><a href="${esc(j.url)}" target="_blank" rel="noopener noreferrer">Open the listing</a> <span class="hint">retrieved ${esc(new Date(j.retrievedAt).toLocaleString())}, via ${esc(j.source)}</span></p>
+    </div></details>`;
+}
+
+async function loadAll(){ await Promise.all([loadResumes(), loadPrefs(), loadLlm()]); await loadJobs(); }
+render(); if (key) guard(loadAll)();
+</script>
+</body>
+</html>

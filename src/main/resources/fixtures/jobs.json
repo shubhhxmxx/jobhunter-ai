@@ -1,0 +1,98 @@
+[
+ {
+  "source": "fixture",
+  "externalId": "fixture-1",
+  "title": "Senior Backend Engineer",
+  "company": "Acme Payments (fixture)",
+  "location": "Bengaluru, India",
+  "remote": false,
+  "salaryMin": null,
+  "salaryMax": null,
+  "description": "<p>Build distributed payment services with Java 21, Spring Boot and Kafka. You know PostgreSQL, Docker and Redis. 3+ years of experience.</p>",
+  "url": "https://example.invalid/fixtures/jobs/1"
+ },
+ {
+  "source": "fixture",
+  "externalId": "fixture-2",
+  "title": "Backend Engineer (Java)",
+  "company": "Northwind Cloud (fixture)",
+  "location": "Worldwide",
+  "remote": true,
+  "salaryMin": null,
+  "salaryMax": null,
+  "description": "We run microservices on AWS with Kafka and Redis. Strong Java and system design skills. 4+ years of backend experience.",
+  "url": "https://example.invalid/fixtures/jobs/2"
+ },
+ {
+  "source": "fixture",
+  "externalId": "fixture-3",
+  "title": "Java Developer",
+  "company": "Onsite Pune Co (fixture)",
+  "location": "Pune, India",
+  "remote": false,
+  "salaryMin": null,
+  "salaryMax": null,
+  "description": "Java, Spring Boot, MySQL. 2+ years.",
+  "url": "https://example.invalid/fixtures/jobs/3"
+ },
+ {
+  "source": "fixture",
+  "externalId": "fixture-4",
+  "title": "Frontend Engineer",
+  "company": "Pixel Works (fixture)",
+  "location": "Bengaluru, India",
+  "remote": false,
+  "salaryMin": null,
+  "salaryMax": null,
+  "description": "React and TypeScript. 3+ years.",
+  "url": "https://example.invalid/fixtures/jobs/4"
+ },
+ {
+  "source": "fixture",
+  "externalId": "fixture-5",
+  "title": "Staff Backend Engineer",
+  "company": "Big Scale Inc (fixture)",
+  "location": "Bengaluru, India",
+  "remote": false,
+  "salaryMin": null,
+  "salaryMax": null,
+  "description": "Lead architecture for HBase and Kafka platforms. 10+ years of experience in distributed systems.",
+  "url": "https://example.invalid/fixtures/jobs/5"
+ },
+ {
+  "source": "fixture",
+  "externalId": "fixture-6",
+  "title": "Backend Engineer",
+  "company": "Django Shop (fixture)",
+  "location": "Bengaluru, India",
+  "remote": false,
+  "salaryMin": null,
+  "salaryMax": null,
+  "description": "Python, Django, PostgreSQL and AWS. 2 years of experience.",
+  "url": "https://example.invalid/fixtures/jobs/6"
+ },
+ {
+  "source": "fixture",
+  "externalId": "fixture-7",
+  "title": "Backend Engineer",
+  "company": "Lowball Ltd (fixture)",
+  "location": "Bengaluru, India",
+  "remote": false,
+  "salaryMin": null,
+  "salaryMax": 40000,
+  "description": "Java and Spring Boot services. 3+ years.",
+  "url": "https://example.invalid/fixtures/jobs/7"
+ },
+ {
+  "source": "fixture",
+  "externalId": "fixture-8",
+  "title": "Backend Engineer (Java)",
+  "company": "Northwind Cloud (fixture)",
+  "location": "Remote",
+  "remote": true,
+  "salaryMin": null,
+  "salaryMax": null,
+  "description": "Duplicate listing of fixture 2 from another board, same company, title and remote status.",
+  "url": "https://example.invalid/fixtures/jobs/8"
+ }
+]

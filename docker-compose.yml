@@ -1,0 +1,25 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: jobhunter
+      POSTGRES_USER: jobhunter
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobhunter"]
+      interval: 5s
+      retries: 10
+  app:
+    build: .
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/jobhunter
+      DB_USER: jobhunter
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      JOBHUNTER_ENCRYPTION_KEY: ${JOBHUNTER_ENCRYPTION_KEY:?set JOBHUNTER_ENCRYPTION_KEY in .env}
+      LOGGING_STRUCTURED_FORMAT_CONSOLE: ecs
+    ports: ["8080:8080"]
+volumes:
+  pgdata:
