@@ -22,12 +22,10 @@ public final class EligibilityFilter {
         } else if (j.remote() && !p.remoteOk()) {
             r.add("Remote role but remote is switched off");
         }
+        // Posting salaries are LPA and only known when the listing states one in INR. Unknown passes.
         if (p.salaryFloor() != null && j.salaryMax() != null && j.salaryMax() < p.salaryFloor()) {
-            r.add("Top of salary range (" + j.salaryMax() + ") is below your floor (" + p.salaryFloor() + ")");
+            r.add("Top of salary range (" + j.salaryMax() + " LPA) is below your floor (" + p.salaryFloor() + " LPA)");
         }
-        Integer req = SkillExtractor.requiredYears(j.description());
-        if (req != null && p.minYears() != null && req < p.minYears()) r.add("Requires " + req + " years, below your minimum of " + p.minYears());
-        if (req != null && p.maxYears() != null && req > p.maxYears()) r.add("Requires " + req + " years, above your maximum of " + p.maxYears());
         return r;
     }
 }

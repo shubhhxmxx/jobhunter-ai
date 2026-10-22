@@ -1,6 +1,7 @@
 package com.jobhunter;
 
 import com.jobhunter.domain.*;
+import com.jobhunter.source.HnPostParser;
 import org.junit.jupiter.api.Test;
 
 import java.time.YearMonth;
@@ -21,7 +22,7 @@ class DomainTest {
 
     private static Preferences prefs() {
         return new Preferences(List.of("Backend Engineer", "Java Developer"), List.of("Bengaluru"), true,
-                100_000, null, 2, 6, 60);
+                10, null, 60);
     }
 
     private static JobPosting job(String title, String loc, boolean remote, Integer salaryMax, String desc) {
@@ -47,8 +48,10 @@ class DomainTest {
         assertFalse(EligibilityFilter.reasons(job("Frontend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
         assertFalse(EligibilityFilter.reasons(job("Backend Engineer", "Pune", false, null, ""), p).isEmpty());
         assertTrue(EligibilityFilter.reasons(job("Backend Engineer", "Germany", true, null, ""), p).isEmpty());
-        assertFalse(EligibilityFilter.reasons(job("Backend Engineer", "Bengaluru", false, 90_000, ""), p).isEmpty());
-        assertFalse(EligibilityFilter.reasons(job("Backend Engineer", "Bengaluru", false, null, "10+ years of experience"), p).isEmpty());
+        assertFalse(EligibilityFilter.reasons(job("Backend Engineer", "Bengaluru", false, 8, ""), p).isEmpty());
+        assertTrue(EligibilityFilter.reasons(job("Backend Engineer", "Bengaluru", false, 12, ""), p).isEmpty());
+        // years required by the job is not a filter
+        assertTrue(EligibilityFilter.reasons(job("Backend Engineer", "Bengaluru", false, null, "10+ years of experience"), p).isEmpty());
     }
 
     @Test void unknownSalaryAndLocationDoNotRejectJobs() {
@@ -105,5 +108,23 @@ class DomainTest {
         assertTrue(r.suggestedRoles().contains("Java Developer"));
         assertFalse(r.suggestedRoles().contains("Frontend Engineer"));
         assertTrue(RoleSuggester.suggest(List.of()).isEmpty());
+    }
+
+    @Test void parsesLpaSalaries() {
+        assertEquals(List.of(20, 30), java.util.Arrays.stream(SalaryParser.parseLpa("Pay: 20-30 LPA")).boxed().toList());
+        assertEquals(List.of(25, 25), java.util.Arrays.stream(SalaryParser.parseLpa("\u20b925 LPA fixed")).boxed().toList());
+        assertEquals(List.of(12, 13), java.util.Arrays.stream(SalaryParser.parseLpa("12.5 lakhs per annum")).boxed().toList());
+        assertEquals(null, SalaryParser.parseLpa("$150k-$200k"));
+    }
+
+    @Test void parsesHackerNewsHiringPosts() {
+        JobPosting p = HnPostParser.parse("Resend (YC W23) | Senior Backend Engineer | Remote (US) | $150k<p>We build email APIs with TypeScript and Postgres.", "42");
+        assertEquals("Resend (YC W23)", p.company());
+        assertEquals("Senior Backend Engineer", p.title());
+        assertTrue(p.remote());
+        assertEquals("https://news.ycombinator.com/item?id=42", p.url());
+        assertTrue(p.description().contains("TypeScript"));
+        assertEquals(null, HnPostParser.parse("Just a general comment, no header here", "43"));
+        assertFalse(HnPostParser.parse("Acme | Backend Engineer | Onsite only, Berlin", "44").remote());
     }
 }

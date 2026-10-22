@@ -2,6 +2,7 @@ package com.jobhunter.service;
 
 import com.jobhunter.domain.JobNormalizer;
 import com.jobhunter.domain.JobPosting;
+import com.jobhunter.domain.SalaryParser;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -34,12 +35,14 @@ public class JobRepository {
         UUID id = UUID.randomUUID();
         String desc = JobNormalizer.stripHtml(p.description());
         if (desc.length() > 20000) desc = desc.substring(0, 20000);
+        int[] sal = (p.salaryMin() == null && p.salaryMax() == null) ? SalaryParser.parseLpa(p.title() + " " + desc) : null;
+        Integer salMin = sal != null ? sal[0] : p.salaryMin(), salMax = sal != null ? sal[1] : p.salaryMax();
         try {
             jdbc.sql("INSERT INTO job(id,source,external_id,company_id,title,location,remote,salary_min,salary_max,description,source_url,dedup_key,status,retrieved_at) "
                             + "VALUES(:id,:s,:x,:c,:ti,:lo,:r,:smin,:smax,:d,:u,:k,'OPEN',:t)")
                     .param("id", id).param("s", p.source()).param("x", p.externalId()).param("c", company(p.company()))
                     .param("ti", truncate(p.title(), 500)).param("lo", truncate(p.location(), 300)).param("r", p.remote())
-                    .param("smin", p.salaryMin()).param("smax", p.salaryMax()).param("d", desc).param("u", truncate(p.url(), 2000))
+                    .param("smin", salMin).param("smax", salMax).param("d", desc).param("u", truncate(p.url(), 2000))
                     .param("k", truncate(key, 900)).param("t", now).update();
             return id;
         } catch (DuplicateKeyException e) {

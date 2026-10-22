@@ -37,7 +37,7 @@ curl localhost:8080/api/v1/jobs -H "X-API-Key: $KEY"
 | PDF resume upload: type/magic-byte/size/page validation, text extraction, versioning, skills/years/sections | implemented |
 | Preferences + configurable match threshold (`PUT /preferences`, `PUT /settings/matching`) | implemented |
 | BYOK: AES-256-GCM at rest, key never returned (only last 4), masked in `toString` | implemented |
-| Hard eligibility filters (title, location, salary, experience range), independent of any LLM | implemented |
+| Hard eligibility filters (title, location, salary), independent of any LLM | implemented |
 | Explainable 0-100 score: matched skills, missing requirements, evidence, uncertainty | implemented |
 | Score caching keyed on resume version + preferences hash + scoring version | implemented |
 | Async search runs: `202` + `Location`, per-source status | implemented |
@@ -55,15 +55,21 @@ What was checked:
 - All other Java files were only syntax-checked. Expect to fix small compile or wiring errors on first `mvn test`.
 - `ApiFlowTest` (full HTTP flow on H2) is written but has never run. Postgres has not been exercised at all; the migration avoids Postgres-only features so it should also run on H2.
 
-Job sources:
+Job sources (all UNVERIFIED against live APIs in tests; the first deploy returned jobs from the live sources, but treat each as untested):
 
-- `fixture`: demo data from `src/main/resources/fixtures/jobs.json`. Every URL is under `example.invalid` and the UI badges them "Fixture". Disable with `JOBHUNTER_FIXTURES=false`.
-- `remotive` and `arbeitnow`: written against the public API shapes but **not yet run against the live APIs**. Treat them as untested. Remotive asks for sparing use and attribution; the adapter makes at most 3 requests per run. Each adapter sends one request per search and reports HTTP 429 as a failed source.
+- `remotive` and `arbeitnow`: public job-board APIs. Remotive asks for sparing use and attribution; at most 3 requests per run.
+- `hackernews`: the monthly "Ask HN: Who is hiring?" thread via the free HN Algolia API (about 3 requests per run). Posts follow a "Company | Role | Location" convention that the parser relies on; posts that don't are skipped. Only posts whose role matches your target titles are kept.
+- `fixture`: demo data from `src/main/resources/fixtures/jobs.json`. Every URL is under `example.invalid`, badged "Fixture" in the UI. Disable with `JOBHUNTER_FIXTURES=false`.
+
+Sources deliberately **not** included, because they have no public API that permits this use (scraping them breaks their terms and gets blocked):
+Wellfound, LinkedIn, Naukri, Y Combinator's Work at a Startup (login required), Crunchbase (paid API), Product Hunt (needs an OAuth token and lists launches, not jobs), TechCrunch and funding news (articles, not job listings; they would need a separate "startup signals" feature that does not assert anyone is hiring). Adding a key-based adapter for one of these means implementing `JobSource` once you have credentials.
+
+Salary: `salaryFloor` is in LPA (lakh INR per year). It is only applied to postings that state a salary in LPA or lakhs; postings with no salary or another currency are kept and not filtered.
 
 ## Known limitations
 
 - Skill matching is a fixed dictionary (about 60 skills), not semantic. Unlisted skills are invisible to scoring.
-- Salary filter compares raw numbers; no currency handling. Adapters do not populate salary yet, so the filter only affects sources that provide it.
+- Salary is only detected from text like "20-30 LPA"; most listings do not state one, so the floor affects few jobs.
 - Resume years of experience is a heuristic ("N years" in the text); set `yearsExperience` in preferences to override it.
 - Scanned (image-only) PDFs are rejected; no OCR.
 - Single user per API key; no key rotation or rate limiting on the API itself.

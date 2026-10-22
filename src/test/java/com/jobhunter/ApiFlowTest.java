@@ -84,7 +84,7 @@ class ApiFlowTest {
         // preferences + threshold
         mvc.perform(put("/api/v1/preferences").header(KEY, apiKey).contentType(MediaType.APPLICATION_JSON).content("""
                 {"targetTitles":["Backend Engineer","Java Developer"],"locations":["Bengaluru"],"remoteOk":true,
-                 "salaryFloor":100000,"yearsExperience":4,"minYears":2,"maxYears":6}""")).andExpect(status().isOk());
+                 "salaryFloor":10,"yearsExperience":4}""")).andExpect(status().isOk());
         mvc.perform(put("/api/v1/settings/matching").header(KEY, apiKey).contentType(MediaType.APPLICATION_JSON)
                 .content("{\"minMatchScore\":101}")).andExpect(status().isBadRequest());
         mvc.perform(put("/api/v1/settings/matching").header(KEY, apiKey).contentType(MediaType.APPLICATION_JSON)
@@ -114,7 +114,7 @@ class ApiFlowTest {
 
         // ranked output: hard filters applied, scores descending, fixtures labelled
         JsonNode jobs = json(mvc.perform(get("/api/v1/jobs").header(KEY, apiKey)).andReturn().getResponse().getContentAsString());
-        assertEquals(3, jobs.size());
+        assertEquals(4, jobs.size(), "fixtures 1, 2, 5 and 6 pass the filters");
         assertTrue(jobs.get(0).get("match").get("score").asInt() >= jobs.get(1).get("match").get("score").asInt());
         assertTrue(jobs.get(0).get("fixture").asBoolean());
         assertTrue(jobs.get(0).get("url").asText().contains("example.invalid"));

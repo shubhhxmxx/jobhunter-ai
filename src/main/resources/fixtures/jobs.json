@@ -79,7 +79,7 @@
   "location": "Bengaluru, India",
   "remote": false,
   "salaryMin": null,
-  "salaryMax": 40000,
+  "salaryMax": 8,
   "description": "Java and Spring Boot services. 3+ years.",
   "url": "https://example.invalid/fixtures/jobs/7"
  },

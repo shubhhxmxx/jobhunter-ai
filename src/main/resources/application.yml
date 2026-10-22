@@ -16,4 +16,5 @@ jobhunter:
   sources:
     fixtures-enabled: ${JOBHUNTER_FIXTURES:true}
     remotive-enabled: ${JOBHUNTER_REMOTIVE:true}
+    hackernews-enabled: ${JOBHUNTER_HN:true}
     arbeitnow-enabled: ${JOBHUNTER_ARBEITNOW:true}

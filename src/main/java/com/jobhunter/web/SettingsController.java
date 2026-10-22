@@ -17,10 +17,8 @@ public class SettingsController {
             @NotNull @Size(min = 1, max = 10) List<@NotBlank @Size(max = 100) String> targetTitles,
             @Size(max = 20) List<@NotBlank @Size(max = 100) String> locations,
             Boolean remoteOk,
-            @PositiveOrZero Integer salaryFloor,
-            @Min(0) @Max(50) Integer yearsExperience,
-            @Min(0) @Max(50) Integer minYears,
-            @Min(0) @Max(50) Integer maxYears) {}
+            @PositiveOrZero @Max(500) Integer salaryFloor,
+            @Min(0) @Max(50) Integer yearsExperience) {}
 
     public record MatchingRequest(@NotNull @Min(0) @Max(100) Integer minMatchScore) {}
 
@@ -47,12 +45,9 @@ public class SettingsController {
 
     @PutMapping("/preferences")
     public Preferences putPreferences(@RequestAttribute("candidateId") UUID id, @Valid @RequestBody PreferencesRequest r) {
-        if (r.minYears() != null && r.maxYears() != null && r.minYears() > r.maxYears()) {
-            throw ApiException.bad("minYears cannot exceed maxYears");
-        }
         prefs.update(id, r.targetTitles().stream().map(String::trim).toList(),
                 r.locations() == null ? List.of() : r.locations().stream().map(String::trim).toList(),
-                r.remoteOk() == null || r.remoteOk(), r.salaryFloor(), r.yearsExperience(), r.minYears(), r.maxYears());
+                r.remoteOk() == null || r.remoteOk(), r.salaryFloor(), r.yearsExperience());
         return prefs.get(id);
     }
 

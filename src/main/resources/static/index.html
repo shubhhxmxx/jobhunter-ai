@@ -90,11 +90,9 @@ button:disabled{opacity:.45;cursor:not-allowed}
     <label><input type="checkbox" id="remoteOk" checked> Include remote roles</label>
     <div class="row">
       <div><label for="yearsExperience">Your years of experience</label><input id="yearsExperience" type="number" min="0" max="50"></div>
-      <div><label for="salaryFloor">Salary floor</label><input id="salaryFloor" type="number" min="0"></div>
-      <div><label for="minYears">Job requires at least (years)</label><input id="minYears" type="number" min="0" max="50"></div>
-      <div><label for="maxYears">Job requires at most (years)</label><input id="maxYears" type="number" min="0" max="50"></div>
+      <div><label for="salaryFloor">Salary floor (LPA)</label><input id="salaryFloor" type="number" min="0" max="500" placeholder="e.g. 25"></div>
     </div>
-    <p class="hint">Salary floor is compared to listed figures as-is; currencies are not converted.</p>
+    <p class="hint">Floor in lakh rupees per year. Only applied to jobs that state a salary in LPA or lakhs. Jobs with no salary, or paid in other currencies, are kept.</p>
     <button id="savePrefs">Save preferences</button>
   </section>
 
@@ -202,13 +200,12 @@ async function loadPrefs(){
   const p = await api("/preferences");
   $("titles").value = p.targetTitles.join("\n"); $("locations").value = p.locations.join("\n");
   $("remoteOk").checked = p.remoteOk;
-  for (const k of ["yearsExperience","salaryFloor","minYears","maxYears"]) $(k).value = p[k] ?? "";
+  for (const k of ["yearsExperience","salaryFloor"]) $(k).value = p[k] ?? "";
   $("threshold").value = p.minMatchScore; $("thVal").textContent = p.minMatchScore;
 }
 $("savePrefs").onclick = guard(async () => {
   await api("/preferences", {method:"PUT", json:{targetTitles:lines($("titles").value), locations:lines($("locations").value),
-    remoteOk:$("remoteOk").checked, yearsExperience:numOrNull("yearsExperience"), salaryFloor:numOrNull("salaryFloor"),
-    minYears:numOrNull("minYears"), maxYears:numOrNull("maxYears")}});
+    remoteOk:$("remoteOk").checked, yearsExperience:numOrNull("yearsExperience"), salaryFloor:numOrNull("salaryFloor")}});
   toast("Preferences saved. Run a search to apply them.");
 });
 
@@ -235,8 +232,19 @@ $("runBtn").onclick = guard(async () => {
       run = await api("/search-runs/" + run.id);
     }
     const failed = run.sources.filter(s => s.status === "FAILED").map(s => `${s.source}: ${s.error}`);
-    $("runState").textContent = run.status === "FAILED" ? "Search failed. " + (run.error||"") + " " + failed.join(" ")
-      : `Found ${run.jobsFound} jobs, ${run.jobsMatched} match at ${run.minScore}+.` + (failed.length ? " Some sources failed: " + failed.join(" ") : "");
+    let msg;
+    if (run.status === "FAILED") msg = "Search failed. " + (run.error||"") + " " + failed.join(" ");
+    else {
+      msg = `Found ${run.jobsFound} jobs. ${run.eligible ?? "?"} passed your filters, ${run.jobsMatched} score ${run.minScore}+.`;
+      const f = run.filteredOut || {}, names = {title:"title", location:"location", remote:"remote off", salary:"salary"};
+      const parts = Object.keys(f).map(k => `${names[k]} ${f[k]}`);
+      if (parts.length) msg += " Filtered out by: " + parts.join(", ") + ".";
+      if (run.eligible > 0 && run.jobsMatched === 0) msg += " Lower the minimum match to see them.";
+      else if (run.eligible === 0 && f.title) msg += " Try broader target titles, such as Software Engineer.";
+      else if (run.eligible === 0 && (f.location || f.remote)) msg += " Check locations and the remote option.";
+      if (failed.length) msg += " Some sources failed: " + failed.join(" ");
+    }
+    $("runState").textContent = msg;
     await loadJobs();
   } finally { $("runBtn").disabled = false; }
 });
