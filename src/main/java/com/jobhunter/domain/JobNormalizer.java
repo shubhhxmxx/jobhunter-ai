@@ -35,9 +35,14 @@ public final class JobNormalizer {
                 .replaceAll("full[- ]stack", "fullstack");
     }
 
+    /** Titles treat developer, programmer and engineer as the same word, so "Backend Engineer" matches "Backend Developer". */
+    private static String canonicalWord(String t) {
+        return t.equals("developer") || t.equals("programmer") || t.equals("dev") || t.equals("developers") || t.equals("engineers") ? "engineer" : t;
+    }
+
     /** Lower-case word tokens; keeps + and # so c++ / c# survive. */
     public static Set<String> tokens(String s) {
-        return Arrays.stream(simplify(s).split("[^a-z0-9+#]+")).filter(t -> !t.isBlank()).collect(Collectors.toSet());
+        return Arrays.stream(simplify(s).split("[^a-z0-9+#]+")).filter(t -> !t.isBlank()).map(JobNormalizer::canonicalWord).collect(Collectors.toSet());
     }
 
     public static boolean titleMatches(String jobTitle, Iterable<String> targets) {

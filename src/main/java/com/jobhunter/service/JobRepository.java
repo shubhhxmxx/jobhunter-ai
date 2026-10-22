@@ -33,8 +33,10 @@ public class JobRepository {
         OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
         Optional<UUID> existing = find(p, key);
         if (existing.isPresent()) {
-            jdbc.sql("UPDATE job SET retrieved_at=:t, status='OPEN', title=:ti, location=:lo WHERE id=:id")
-                    .param("t", now).param("ti", truncate(title, 500)).param("lo", truncate(place, 300)).param("id", existing.get()).update();
+            jdbc.sql("UPDATE job SET retrieved_at=:t, status='OPEN', title=:ti, location=:lo, posted_at=COALESCE(posted_at,:pa), "
+                            + "repost_count=CASE WHEN :rc > repost_count THEN :rc ELSE repost_count END WHERE id=:id")
+                    .param("t", now).param("ti", truncate(title, 500)).param("lo", truncate(place, 300))
+                    .param("pa", postedAt(p)).param("rc", p.repostCount()).param("id", existing.get()).update();
             return existing.get();
         }
         UUID id = UUID.randomUUID();
@@ -45,16 +47,21 @@ public class JobRepository {
         Integer salMax = p.salaryMax();
         if (sal != null) { salMin = sal[0]; salMax = sal[1]; } // a ternary here would unbox a null Integer and throw
         try {
-            jdbc.sql("INSERT INTO job(id,source,external_id,company_id,title,location,remote,salary_min,salary_max,description,source_url,dedup_key,status,retrieved_at) "
-                            + "VALUES(:id,:s,:x,:c,:ti,:lo,:r,:smin,:smax,:d,:u,:k,'OPEN',:t)")
+            jdbc.sql("INSERT INTO job(id,source,external_id,company_id,title,location,remote,salary_min,salary_max,description,source_url,dedup_key,status,retrieved_at,posted_at,repost_count) "
+                            + "VALUES(:id,:s,:x,:c,:ti,:lo,:r,:smin,:smax,:d,:u,:k,'OPEN',:t,:pa,:rc)")
                     .param("id", id).param("s", p.source()).param("x", p.externalId()).param("c", company(companyName))
                     .param("ti", truncate(title, 500)).param("lo", truncate(place, 300)).param("r", p.remote())
                     .param("smin", salMin).param("smax", salMax).param("d", desc).param("u", truncate(p.url(), 2000))
-                    .param("k", truncate(key, 900)).param("t", now).update();
+                    .param("k", truncate(key, 900)).param("t", now)
+                    .param("pa", postedAt(p)).param("rc", p.repostCount()).update();
             return id;
         } catch (DuplicateKeyException e) {
             return find(p, key).orElseThrow(() -> e);
         }
+    }
+
+    private static OffsetDateTime postedAt(JobPosting p) {
+        return p.postedAt() == null ? null : p.postedAt().atOffset(ZoneOffset.UTC);
     }
 
     private Optional<UUID> find(JobPosting p, String key) {
@@ -86,7 +93,7 @@ public class JobRepository {
                 .query((rs, i) -> new Row(rs.getObject("id", UUID.class), new JobPosting(rs.getString("source"), rs.getString("external_id"),
                         rs.getString("title"), rs.getString("company_name"), rs.getString("location"), rs.getBoolean("remote"),
                         PreferencesService.intOrNull(rs, "salary_min"), PreferencesService.intOrNull(rs, "salary_max"),
-                        rs.getString("description"), rs.getString("source_url"))))
+                        rs.getString("description"), rs.getString("source_url"), null, 0)))
                 .list();
     }
 

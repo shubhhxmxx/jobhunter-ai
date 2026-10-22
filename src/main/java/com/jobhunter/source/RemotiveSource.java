@@ -27,11 +27,19 @@ public class RemotiveSource implements JobSource {
         return "remotive";
     }
 
+    static java.time.Instant parseDate(String s) {
+        try {
+            return s.isBlank() ? null : java.time.LocalDateTime.parse(s.length() > 19 ? s.substring(0, 19) : s).toInstant(java.time.ZoneOffset.UTC);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     @Override
     public List<JobPosting> fetch(Query q) throws Exception {
         Map<String, JobPosting> out = new LinkedHashMap<>();
         for (String title : q.titles().stream().limit(3).toList()) {
-            JsonNode root = http.getJson("https://remotive.com/api/remote-jobs?limit=50&search=" + URLEncoder.encode(title, StandardCharsets.UTF_8));
+            JsonNode root = http.getJson("https://remotive.com/api/remote-jobs?limit=100&search=" + URLEncoder.encode(title, StandardCharsets.UTF_8));
             for (JsonNode j : root.path("jobs")) {
                 String url = j.path("url").asText("");
                 String jobTitle = j.path("title").asText("");
@@ -39,7 +47,7 @@ public class RemotiveSource implements JobSource {
                 String ext = j.path("id").asText();
                 out.putIfAbsent(ext, new JobPosting(id(), ext, jobTitle, j.path("company_name").asText("Unknown"),
                         j.path("candidate_required_location").asText(null), true, null, null,
-                        j.path("description").asText(""), url));
+                        j.path("description").asText(""), url, parseDate(j.path("publication_date").asText("")), 0));
             }
         }
         return new ArrayList<>(out.values());

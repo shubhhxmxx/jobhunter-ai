@@ -46,6 +46,6 @@ public final class HnPostParser {
         String description = JobNormalizer.stripHtml(commentHtml.replaceAll("(?i)<p>", "\n"));
         String url = applyUrl != null ? applyUrl : "https://news.ycombinator.com/item?id=" + itemId;
         return new JobPosting("hackernews", itemId, title, company, location.isBlank() ? null : location, remote,
-                null, null, description, url);
+                null, null, description, url, null, 0);
     }
 }

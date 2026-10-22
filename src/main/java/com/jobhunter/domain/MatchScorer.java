@@ -8,7 +8,7 @@ import java.util.*;
  */
 public final class MatchScorer {
     /** Part of the cache key for stored results. Bump it whenever EligibilityFilter or scoring logic changes, or old results stay cached. */
-    public static final String SCORING_VERSION = "v2";
+    public static final String SCORING_VERSION = "v3";
 
     private MatchScorer() {}
 
@@ -40,6 +40,7 @@ public final class MatchScorer {
         Integer req = SkillExtractor.requiredYears(job.description());
         Integer mine = prefs.yearsExperience() != null ? prefs.yearsExperience() : resume.yearsExperience();
         int expPts;
+        int penalty = 0;
         if (req == null) {
             expPts = 10;
             uncertainty.add("No experience requirement stated in the posting");
@@ -47,14 +48,19 @@ public final class MatchScorer {
             expPts = 10;
             uncertainty.add("Your years of experience are unknown; set yearsExperience in preferences");
         } else {
-            expPts = mine >= req ? 20 : (int) Math.round(20.0 * mine / req);
+            int gap = req - mine;
+            if (gap <= 0) expPts = 20;
+            else if (gap == 1) expPts = 15;
+            else if (gap == 2) expPts = 8;
+            else { expPts = 0; penalty = Math.min(15, 5 * (gap - 2)); } // 3+ years short: rank clearly lower
+            if (gap >= 2) uncertainty.add("Asks for " + req + "+ years of experience; you have about " + mine);
         }
 
         List<String> evidence = new ArrayList<>();
         for (String s : matched.stream().limit(5).toList()) {
             SkillExtractor.snippet(job.description(), s).ifPresent(sn -> evidence.add(s + ": \"" + sn + "\""));
         }
-        int total = Math.max(0, Math.min(100, skillPts + titlePts + expPts));
+        int total = Math.max(0, Math.min(100, skillPts + titlePts + expPts - penalty));
         return new MatchResult(total, matched, missing, evidence, uncertainty);
     }
 }

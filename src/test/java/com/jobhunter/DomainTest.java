@@ -4,6 +4,7 @@ import com.jobhunter.domain.*;
 import com.jobhunter.source.HnPostParser;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
 import java.time.YearMonth;
 import java.util.List;
 
@@ -26,7 +27,7 @@ class DomainTest {
     }
 
     private static JobPosting job(String title, String loc, boolean remote, Integer salaryMax, String desc) {
-        return new JobPosting("t", "1", title, "Acme", loc, remote, null, salaryMax, desc, "https://example.invalid/1");
+        return new JobPosting("t", "1", title, "Acme", loc, remote, null, salaryMax, desc, "https://example.invalid/1", null, 0);
     }
 
     @Test void parsesSkillsYearsAndSections() {
@@ -160,5 +161,33 @@ class DomainTest {
         assertFalse(EligibilityFilter.reasons(job("Principal Backend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
         assertTrue(EligibilityFilter.reasons(job("Senior Backend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
         assertTrue(EligibilityFilter.reasons(job("Backend Engineer", "Bengaluru", false, null, "Our staff are great"), p).isEmpty());
+    }
+
+    @Test void jobsAskingFarMoreYearsRankClearlyLower() {
+        ParsedResume r = ResumeParser.parse(RESUME); // about 4 years
+        Preferences p = new Preferences(List.of("Backend Engineer"), List.of("Bengaluru"), true, null, 3, List.of(), 60);
+        String skills = "Java Spring Kafka Redis. ";
+        MatchResult fits = MatchScorer.score(job("Backend Engineer", "Bengaluru", false, null, skills + "2+ years"), r, p);
+        MatchResult stretch = MatchScorer.score(job("Backend Engineer", "Bengaluru", false, null, skills + "4+ years"), r, p);
+        MatchResult far = MatchScorer.score(job("Backend Engineer", "Bengaluru", false, null, skills + "8+ years"), r, p);
+        assertTrue(fits.score() > stretch.score() && stretch.score() > far.score(), fits.score() + " " + stretch.score() + " " + far.score());
+        assertTrue(fits.score() - far.score() >= 25, "gap " + (fits.score() - far.score()));
+        assertTrue(far.uncertainty().stream().anyMatch(u -> u.contains("8+ years") && u.contains("about 3")));
+        assertTrue(fits.uncertainty().stream().noneMatch(u -> u.contains("Asks for")));
+    }
+
+    @Test void warnsAboutOldAndRepostedListings() {
+        Instant now = Instant.parse("2026-10-22T00:00:00Z");
+        assertTrue(ListingHealth.warnings(now.minusSeconds(10L * 86400), 0, now).isEmpty());
+        assertEquals(1, ListingHealth.warnings(now.minusSeconds(60L * 86400), 0, now).size());
+        assertEquals(1, ListingHealth.warnings(null, 2, now).size());
+        assertTrue(ListingHealth.warnings(null, 1, now).isEmpty());
+        assertTrue(ListingHealth.warnings(null, 0, now).isEmpty());
+    }
+
+    @Test void developerAndEngineerTitlesMatch() {
+        assertTrue(JobNormalizer.titleMatches("Senior Backend Developer", List.of("Backend Engineer")));
+        assertTrue(JobNormalizer.titleMatches("Java Engineer", List.of("Java Developer")));
+        assertFalse(JobNormalizer.titleMatches("Frontend Developer", List.of("Backend Engineer")));
     }
 }

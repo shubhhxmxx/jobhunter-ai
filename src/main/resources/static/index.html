@@ -31,6 +31,8 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .chip{font-size:.8rem;padding:.1rem .5rem;border-radius:99px;border:1px solid var(--line)}
 .chip.ok{background:var(--pine-bg);color:var(--pine);border-color:transparent}
 .chip.miss{background:var(--brick-bg);color:var(--brick);border-color:transparent}
+.chip.warn{background:var(--amber-bg);color:var(--amber);border-color:transparent;font-weight:700}
+.warnline{color:var(--amber)}
 .chip.fixture{background:var(--amber-bg);color:var(--amber);border-color:transparent;font-weight:700}
 .keybox{background:var(--amber-bg);color:var(--ink);padding:.6rem;border-radius:6px;word-break:break-all;font-family:ui-monospace,monospace;font-size:.85rem}
 .job{border-top:1px solid var(--line);padding:.9rem 0}
@@ -257,7 +259,7 @@ $("runBtn").onclick = guard(async () => {
 });
 
 async function loadJobs(){
-  const jobs = await api("/jobs?limit=50");
+  const jobs = await api("/jobs?limit=200");
   $("jobs").innerHTML = jobs.length ? jobs.map(jobHtml).join("") : '<div class="empty">No matches at this threshold. Lower the minimum match, widen your titles, or run a search.</div>';
 }
 function jobHtml(j){
@@ -265,14 +267,15 @@ function jobHtml(j){
   const chips = (arr, cls) => arr.map(s => `<span class="chip ${cls}">${esc(s)}</span>`).join("");
   return `<details class="job"><summary>
     <div class="score" style="--s:${m.score}"><span>${m.score}</span></div>
-    <div><h3>${esc(j.title)} ${j.fixture ? '<span class="chip fixture">Fixture</span>' : ""}</h3>
+    <div><h3>${esc(j.title)} ${j.fixture ? '<span class="chip fixture">Fixture</span>' : ""}${(j.warnings||[]).length ? ' <span class="chip warn" title="See details">Check listing</span>' : ""}</h3>
     <div class="meta">${esc(j.company)}, ${esc(j.remote ? (j.location && !/remote/i.test(j.location) ? j.location + " (remote)" : "Remote") : j.location || "Location not listed")}</div></div></summary>
     <div class="detail">
       <h4>Matched skills</h4><div class="chips">${chips(m.matchedSkills,"ok") || '<span class="hint">None recognized</span>'}</div>
       <h4>Missing from your resume</h4><div class="chips">${chips(m.missingRequirements,"miss") || '<span class="hint">Nothing missing</span>'}</div>
       ${m.evidence.length ? "<h4>Evidence in the posting</h4>" + m.evidence.map(e => `<blockquote>${esc(e)}</blockquote>`).join("") : ""}
-      ${m.uncertainty.length ? "<h4>What we couldn't tell</h4>" + m.uncertainty.map(u => `<div class="hint">${esc(u)}</div>`).join("") : ""}
-      <p><a href="${esc(j.url)}" target="_blank" rel="noopener noreferrer">Open the listing</a> <span class="hint">retrieved ${esc(new Date(j.retrievedAt).toLocaleString())}, via ${esc(j.source)}</span></p>
+      ${(j.warnings||[]).length ? "<h4>Listing warnings</h4>" + j.warnings.map(w => `<div class="hint warnline">${esc(w)}</div>`).join("") : ""}
+      ${m.uncertainty.length ? "<h4>Things to check</h4>" + m.uncertainty.map(u => `<div class="hint">${esc(u)}</div>`).join("") : ""}
+      <p><a href="${esc(j.url)}" target="_blank" rel="noopener noreferrer">Open the listing</a> <span class="hint">${j.postedAt ? "posted " + esc(new Date(j.postedAt).toLocaleDateString()) + ", " : ""}via ${esc(j.source)}</span></p>
     </div></details>`;
 }
 

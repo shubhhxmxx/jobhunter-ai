@@ -80,7 +80,7 @@ public class SearchRunWorker {
         }
         if (ok == 0) { finish(runId, "FAILED", 0, 0, "Every job source failed. See sources for details"); return; }
 
-        for (JobRepository.Row row : jobs.openJobs(2000)) matcher.evaluate(candidateId, resume, prefs, hash, row);
+        for (JobRepository.Row row : jobs.openJobs(6000)) matcher.evaluate(candidateId, resume, prefs, hash, row);
         int matched = jdbc.sql("SELECT COUNT(*) FROM job_match WHERE candidate_id=:c AND resume_id=:r AND prefs_hash=:h AND scoring_version=:v AND eligible=TRUE AND score>=:m")
                 .param("c", candidateId).param("r", resume.id()).param("h", hash).param("v", MatchScorer.SCORING_VERSION)
                 .param("m", prefs.minMatchScore()).query(Integer.class).single();

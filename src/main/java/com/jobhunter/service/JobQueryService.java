@@ -1,5 +1,6 @@
 package com.jobhunter.service;
 
+import com.jobhunter.domain.ListingHealth;
 import com.jobhunter.domain.MatchScorer;
 import com.jobhunter.domain.Preferences;
 import com.jobhunter.web.ApiException;
@@ -19,9 +20,10 @@ public class JobQueryService {
                             List<String> evidence, List<String> uncertainty, List<String> rejectionReasons, int resumeVersion) {}
 
     public record JobView(UUID id, String source, boolean fixture, String title, String company, String location, boolean remote,
-                          Integer salaryMin, Integer salaryMax, String url, OffsetDateTime retrievedAt, String description, MatchView match) {}
+                          Integer salaryMin, Integer salaryMax, String url, OffsetDateTime retrievedAt, OffsetDateTime postedAt, int repostCount,
+                          List<String> warnings, String description, MatchView match) {}
 
-    private static final String COLS = "SELECT j.id,j.source,j.title,j.location,j.remote,j.salary_min,j.salary_max,j.source_url,j.retrieved_at,j.description,"
+    private static final String COLS = "SELECT j.id,j.source,j.title,j.location,j.remote,j.salary_min,j.salary_max,j.source_url,j.retrieved_at,j.posted_at,j.repost_count,j.description,"
             + "c.name AS company_name,m.eligible AS m_eligible,m.score AS m_score,m.matched_skills,m.missing_requirements,m.evidence,"
             + "m.uncertainty,m.rejection_reasons,m.resume_version ";
 
@@ -69,10 +71,13 @@ public class JobQueryService {
                     json.list(rs.getString("uncertainty")), json.list(rs.getString("rejection_reasons")), rs.getInt("resume_version"));
         }
         String source = rs.getString("source");
+        OffsetDateTime posted = rs.getObject("posted_at", OffsetDateTime.class);
+        int reposts = rs.getInt("repost_count");
         return new JobView(rs.getObject("id", UUID.class), source, source.equals("fixture"), rs.getString("title"),
                 rs.getString("company_name"), rs.getString("location"), rs.getBoolean("remote"),
                 PreferencesService.intOrNull(rs, "salary_min"), PreferencesService.intOrNull(rs, "salary_max"),
-                rs.getString("source_url"), rs.getObject("retrieved_at", OffsetDateTime.class),
+                rs.getString("source_url"), rs.getObject("retrieved_at", OffsetDateTime.class), posted, reposts,
+                ListingHealth.warnings(posted == null ? null : posted.toInstant(), reposts, java.time.Instant.now()),
                 withDescription ? rs.getString("description") : null, match);
     }
 }

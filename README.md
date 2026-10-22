@@ -58,6 +58,8 @@ What was checked:
 Job sources (all UNVERIFIED against live APIs in tests; the first deploy returned jobs from the live sources, but treat each as untested):
 
 - `remotive` and `arbeitnow`: public job-board APIs. Remotive asks for sparing use and attribution; at most 3 requests per run.
+- `remoteok` and `jobicy`: public remote-job feeds; both require crediting and linking back to the listing, which the UI does.
+- `adzuna`: aggregates many Indian job boards. Needs a free App ID and key (developer.adzuna.com) in `JOBHUNTER_ADZUNA_APP_ID` and `JOBHUNTER_ADZUNA_APP_KEY`; without them it is not loaded. Descriptions are short snippets.
 - `hackernews`: the monthly "Ask HN: Who is hiring?" thread via the free HN Algolia API (about 3 requests per run). Posts follow a "Company | Role | Location" convention that the parser relies on; posts that don't are skipped. Only posts whose role matches your target titles are kept.
 - `fixture`: demo data from `src/main/resources/fixtures/jobs.json`. Every URL is under `example.invalid`, badged "Fixture" in the UI. Disable with `JOBHUNTER_FIXTURES=false`.
 
@@ -68,6 +70,7 @@ Salary: `salaryFloor` is in LPA (lakh INR per year). It is only applied to posti
 
 ## Known limitations
 
+- Repost/ghost warnings are heuristics: listing age over 45 days, and (Hacker News only) the same company and role appearing in the previous two monthly threads. They cannot prove a listing is fake.
 - Skill matching is a fixed dictionary (about 60 skills), not semantic. Unlisted skills are invisible to scoring.
 - Salary is only detected from text like "20-30 LPA"; most listings do not state one, so the floor affects few jobs.
 - Resume years of experience is a heuristic ("N years" in the text); set `yearsExperience` in preferences to override it.
