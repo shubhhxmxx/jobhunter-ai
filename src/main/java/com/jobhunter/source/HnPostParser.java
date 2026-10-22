@@ -16,6 +16,8 @@ public final class HnPostParser {
 
     private HnPostParser() {}
 
+    private static final Pattern URL = Pattern.compile("https?://[^\\s|)]+");
+
     /** Returns null when the comment does not follow the header convention. */
     public static JobPosting parse(String commentHtml, String itemId) {
         if (commentHtml == null || itemId == null) return null;
@@ -23,19 +25,27 @@ public final class HnPostParser {
         String header = JobNormalizer.stripHtml(headerHtml).split("\\n")[0].trim();
         String[] raw = header.split("\\|");
         if (raw.length < 2) return null;
+
+        // The header often runs straight into the intro paragraph, so keep only short fields and pull out the job link.
         List<String> fields = new ArrayList<>();
-        for (String f : raw) if (!f.isBlank()) fields.add(f.trim());
+        String applyUrl = null;
+        for (String f : raw) {
+            f = f.trim();
+            var m = URL.matcher(f);
+            if (m.find()) { if (applyUrl == null) applyUrl = m.group().replaceAll("[.,;]+$", ""); continue; }
+            if (!f.isEmpty() && f.length() <= 80) fields.add(f);
+        }
         if (fields.size() < 2) return null;
 
         String company = fields.get(0);
-        if (company.length() > 80) return null;
         String title = fields.stream().skip(1).filter(f -> ROLE.matcher(f).find()).findFirst().orElse(fields.get(1));
-        if (title.length() > 200) title = title.substring(0, 200);
         final String chosen = title;
         String location = String.join(", ", fields.stream().skip(1).filter(f -> !f.equals(chosen)).limit(3).toList());
-        boolean remote = REMOTE.matcher(header).find() && !NOT_REMOTE.matcher(header).find();
+        String head = String.join(" | ", fields);
+        boolean remote = REMOTE.matcher(head).find() && !NOT_REMOTE.matcher(head).find();
         String description = JobNormalizer.stripHtml(commentHtml.replaceAll("(?i)<p>", "\n"));
+        String url = applyUrl != null ? applyUrl : "https://news.ycombinator.com/item?id=" + itemId;
         return new JobPosting("hackernews", itemId, title, company, location.isBlank() ? null : location, remote,
-                null, null, description, "https://news.ycombinator.com/item?id=" + itemId);
+                null, null, description, url);
     }
 }

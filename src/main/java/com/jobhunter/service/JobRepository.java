@@ -33,7 +33,8 @@ public class JobRepository {
         OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
         Optional<UUID> existing = find(p, key);
         if (existing.isPresent()) {
-            jdbc.sql("UPDATE job SET retrieved_at=:t, status='OPEN' WHERE id=:id").param("t", now).param("id", existing.get()).update();
+            jdbc.sql("UPDATE job SET retrieved_at=:t, status='OPEN', title=:ti, location=:lo WHERE id=:id")
+                    .param("t", now).param("ti", truncate(title, 500)).param("lo", truncate(place, 300)).param("id", existing.get()).update();
             return existing.get();
         }
         UUID id = UUID.randomUUID();

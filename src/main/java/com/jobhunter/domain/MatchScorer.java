@@ -7,7 +7,8 @@ import java.util.*;
  * Pure and deterministic, so results can be cached against (resume version, preferences, SCORING_VERSION).
  */
 public final class MatchScorer {
-    public static final String SCORING_VERSION = "v1";
+    /** Part of the cache key for stored results. Bump it whenever EligibilityFilter or scoring logic changes, or old results stay cached. */
+    public static final String SCORING_VERSION = "v2";
 
     private MatchScorer() {}
 

@@ -73,6 +73,7 @@ public class SearchRunService {
         patterns.put("location", "outside your target locations");
         patterns.put("remote", "remote is switched off");
         patterns.put("salary", "below your floor");
+        patterns.put("level", "Seniority level");
         patterns.forEach((k, pat) -> {
             int n = count.apply("eligible=FALSE AND rejection_reasons LIKE '%" + pat + "%'");
             if (n > 0) filtered.put(k, n);

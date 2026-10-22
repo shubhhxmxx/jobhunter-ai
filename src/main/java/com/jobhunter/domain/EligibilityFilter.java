@@ -2,6 +2,7 @@ package com.jobhunter.domain;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -13,6 +14,17 @@ public final class EligibilityFilter {
             "worldwide|anywhere|global|everywhere|^\\s*remote\\b(?!.*(\\(|\\bonly\\b|\\bus\\b|\\busa\\b|\\beu\\b|\\buk\\b|\\beurope\\b|\\bcanada\\b))");
     private static final Set<String> INDIAN_CITIES = Set.of("bengaluru", "bangalore", "mumbai", "delhi", "new delhi", "ncr", "gurgaon",
             "gurugram", "noida", "hyderabad", "pune", "chennai", "kolkata", "ahmedabad");
+
+    /** Seniority levels a candidate can exclude, with the title words that identify each. */
+    public static final Map<String, Set<String>> LEVELS = Map.of(
+            "intern", Set.of("intern", "internship", "trainee", "werkstudent", "praktikum"),
+            "junior", Set.of("junior", "jr", "graduate", "entry"),
+            "senior", Set.of("senior", "sr"),
+            "lead", Set.of("lead", "head"),
+            "staff", Set.of("staff"),
+            "principal", Set.of("principal"),
+            "manager", Set.of("manager"),
+            "director", Set.of("director", "vp"));
 
     private EligibilityFilter() {}
 
@@ -34,6 +46,11 @@ public final class EligibilityFilter {
         List<String> r = new ArrayList<>();
         if (!p.targetTitles().isEmpty() && !JobNormalizer.titleMatches(j.title(), p.targetTitles())) {
             r.add("Title does not match any target title");
+        }
+        Set<String> titleWords = JobNormalizer.tokens(j.title());
+        for (String level : p.excludedLevels()) {
+            Set<String> words = LEVELS.get(level);
+            if (words != null && words.stream().anyMatch(titleWords::contains)) r.add("Seniority level '" + level + "' is excluded");
         }
         if (!p.locations().isEmpty()) {
             String loc = j.location() == null ? "" : j.location().toLowerCase(Locale.ROOT).trim();

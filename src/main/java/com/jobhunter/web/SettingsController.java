@@ -18,7 +18,8 @@ public class SettingsController {
             @Size(max = 20) List<@NotBlank @Size(max = 100) String> locations,
             Boolean remoteOk,
             @PositiveOrZero @Max(500) Integer salaryFloor,
-            @Min(0) @Max(50) Integer yearsExperience) {}
+            @Min(0) @Max(50) Integer yearsExperience,
+            @Size(max = 10) List<@NotBlank String> excludedLevels) {}
 
     public record MatchingRequest(@NotNull @Min(0) @Max(100) Integer minMatchScore) {}
 
@@ -45,9 +46,15 @@ public class SettingsController {
 
     @PutMapping("/preferences")
     public Preferences putPreferences(@RequestAttribute("candidateId") UUID id, @Valid @RequestBody PreferencesRequest r) {
+        List<String> levels = r.excludedLevels() == null ? List.of() : r.excludedLevels().stream().map(l -> l.trim().toLowerCase()).toList();
+        for (String l : levels) {
+            if (!com.jobhunter.domain.EligibilityFilter.LEVELS.containsKey(l)) {
+                throw ApiException.bad("Unknown level '" + l + "'. Allowed: " + new java.util.TreeSet<>(com.jobhunter.domain.EligibilityFilter.LEVELS.keySet()));
+            }
+        }
         prefs.update(id, r.targetTitles().stream().map(String::trim).toList(),
                 r.locations() == null ? List.of() : r.locations().stream().map(String::trim).toList(),
-                r.remoteOk() == null || r.remoteOk(), r.salaryFloor(), r.yearsExperience());
+                r.remoteOk() == null || r.remoteOk(), r.salaryFloor(), r.yearsExperience(), levels);
         return prefs.get(id);
     }
 

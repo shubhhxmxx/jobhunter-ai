@@ -22,7 +22,7 @@ class DomainTest {
 
     private static Preferences prefs() {
         return new Preferences(List.of("Backend Engineer", "Java Developer"), List.of("Bengaluru"), true,
-                10, null, 60);
+                10, null, List.of(), 60);
     }
 
     private static JobPosting job(String title, String loc, boolean remote, Integer salaryMax, String desc) {
@@ -125,6 +125,14 @@ class DomainTest {
         assertEquals("https://news.ycombinator.com/item?id=42", p.url());
         assertTrue(p.description().contains("TypeScript"));
         assertEquals(null, HnPostParser.parse("Just a general comment, no header here", "43"));
+        // header that runs straight into the intro paragraph, as in real posts
+        JobPosting e = HnPostParser.parse("Enveritas (YC S18, non-profit) | Backend Software Engineer | Remote (Global) | "
+                + "<a href=\"https://enveritas.org/jobs/\">https://enveritas.org/jobs/</a> Enveritas is a 501(c)(3) nonprofit working on sustainability issues facing smallholder coffee farmers.<p>Python, Docker, AWS", "45");
+        assertEquals("Enveritas (YC S18, non-profit)", e.company());
+        assertEquals("Backend Software Engineer", e.title());
+        assertEquals("Remote (Global)", e.location());
+        assertEquals("https://enveritas.org/jobs/", e.url());
+        assertTrue(e.remote());
         assertFalse(HnPostParser.parse("Acme | Backend Engineer | Onsite only, Berlin", "44").remote());
     }
 
@@ -144,5 +152,13 @@ class DomainTest {
         assertTrue(EligibilityFilter.reasons(job("Backend Engineer", "India", true, null, ""), p).isEmpty());
         assertTrue(EligibilityFilter.reasons(job("Backend Engineer", "Bangalore, KA", false, null, ""), p).isEmpty());
         assertTrue(EligibilityFilter.reasons(job("Backend Engineer", null, true, null, ""), p).isEmpty());
+    }
+
+    @Test void skipsExcludedSeniorityLevels() {
+        Preferences p = new Preferences(List.of("Backend Engineer"), List.of("Bengaluru"), true, null, null, List.of("staff", "principal"), 60);
+        assertFalse(EligibilityFilter.reasons(job("Staff Backend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
+        assertFalse(EligibilityFilter.reasons(job("Principal Backend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
+        assertTrue(EligibilityFilter.reasons(job("Senior Backend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
+        assertTrue(EligibilityFilter.reasons(job("Backend Engineer", "Bengaluru", false, null, "Our staff are great"), p).isEmpty());
     }
 }

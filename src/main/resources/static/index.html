@@ -89,6 +89,8 @@ button:disabled{opacity:.45;cursor:not-allowed}
     <label for="locations">Locations (one per line)</label><textarea id="locations" rows="2" placeholder="Bengaluru"></textarea>
     <p class="hint">Remote jobs are kept only if open worldwide or to one of these places. Indian cities also match "India".</p>
     <label><input type="checkbox" id="remoteOk" checked> Include remote roles</label>
+    <label>Skip these levels</label>
+    <div class="chips" id="levels"></div>
     <div class="row">
       <div><label for="yearsExperience">Your years of experience</label><input id="yearsExperience" type="number" min="0" max="50"></div>
       <div><label for="salaryFloor">Salary floor (LPA)</label><input id="salaryFloor" type="number" min="0" max="500" placeholder="e.g. 25"></div>
@@ -146,6 +148,9 @@ async function api(path, opts={}){
 }
 const guard = fn => async (...a) => { try { await fn(...a) } catch (e) { toast(e.message) } };
 const lines = s => s.split("\n").map(x=>x.trim()).filter(Boolean);
+const LEVELS = ["intern","junior","senior","lead","staff","principal","manager","director"];
+$("levels").innerHTML = LEVELS.map(l => `<label class="chip" style="margin:0;cursor:pointer"><input type="checkbox" value="${l}"> ${l}</label>`).join("");
+const pickedLevels = () => [...document.querySelectorAll("#levels input:checked")].map(i => i.value);
 const numOrNull = id => $(id).value === "" ? null : Number($(id).value);
 
 function render(){
@@ -201,12 +206,13 @@ async function loadPrefs(){
   const p = await api("/preferences");
   $("titles").value = p.targetTitles.join("\n"); $("locations").value = p.locations.join("\n");
   $("remoteOk").checked = p.remoteOk;
+  document.querySelectorAll("#levels input").forEach(i => i.checked = (p.excludedLevels||[]).includes(i.value));
   for (const k of ["yearsExperience","salaryFloor"]) $(k).value = p[k] ?? "";
   $("threshold").value = p.minMatchScore; $("thVal").textContent = p.minMatchScore;
 }
 $("savePrefs").onclick = guard(async () => {
   await api("/preferences", {method:"PUT", json:{targetTitles:lines($("titles").value), locations:lines($("locations").value),
-    remoteOk:$("remoteOk").checked, yearsExperience:numOrNull("yearsExperience"), salaryFloor:numOrNull("salaryFloor")}});
+    remoteOk:$("remoteOk").checked, yearsExperience:numOrNull("yearsExperience"), salaryFloor:numOrNull("salaryFloor"), excludedLevels:pickedLevels()}});
   toast("Preferences saved. Run a search to apply them.");
 });
 
@@ -237,7 +243,7 @@ $("runBtn").onclick = guard(async () => {
     if (run.status === "FAILED") msg = "Search failed. " + (run.error||"") + " " + failed.join(" ");
     else {
       msg = `Found ${run.jobsFound} jobs. ${run.eligible ?? "?"} passed your filters, ${run.jobsMatched} score ${run.minScore}+.`;
-      const f = run.filteredOut || {}, names = {title:"title", location:"location", remote:"remote off", salary:"salary"};
+      const f = run.filteredOut || {}, names = {title:"title", location:"location", remote:"remote off", salary:"salary", level:"seniority"};
       const parts = Object.keys(f).map(k => `${names[k]} ${f[k]}`);
       if (parts.length) msg += " Filtered out by: " + parts.join(", ") + ".";
       if (run.eligible > 0 && run.jobsMatched === 0) msg += " Lower the minimum match to see them.";
