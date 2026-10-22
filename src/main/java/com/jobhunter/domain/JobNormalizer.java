@@ -10,9 +10,23 @@ public final class JobNormalizer {
     public static String stripHtml(String html) {
         if (html == null) return "";
         String s = html.replaceAll("(?i)<br\\s*/?>|</p>|</li>|</div>", "\n").replaceAll("<[^>]+>", " ");
+        s = decodeNumericEntities(s);
         s = s.replace("&nbsp;", " ").replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
                 .replace("&quot;", "\"").replace("&#39;", "'");
         return s.replaceAll("[ \\t\\u00a0]+", " ").replaceAll("\\s*\\n\\s*", "\n").trim();
+    }
+
+    private static final java.util.regex.Pattern NUMERIC_ENTITY = java.util.regex.Pattern.compile("&#(x?)([0-9a-fA-F]{1,6});");
+
+    private static String decodeNumericEntities(String s) {
+        java.util.regex.Matcher m = NUMERIC_ENTITY.matcher(s);
+        StringBuilder out = new StringBuilder();
+        while (m.find()) {
+            int cp = Integer.parseInt(m.group(2), m.group(1).isEmpty() ? 10 : 16);
+            m.appendReplacement(out, java.util.regex.Matcher.quoteReplacement(Character.isValidCodePoint(cp) ? new String(Character.toChars(cp)) : ""));
+        }
+        m.appendTail(out);
+        return out.toString();
     }
 
     private static String simplify(String s) {

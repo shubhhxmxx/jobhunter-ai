@@ -87,6 +87,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
     <h2>What you want</h2>
     <label for="titles">Target titles (one per line)</label><textarea id="titles" rows="3" placeholder="Backend Engineer"></textarea>
     <label for="locations">Locations (one per line)</label><textarea id="locations" rows="2" placeholder="Bengaluru"></textarea>
+    <p class="hint">Remote jobs are kept only if open worldwide or to one of these places. Indian cities also match "India".</p>
     <label><input type="checkbox" id="remoteOk" checked> Include remote roles</label>
     <div class="row">
       <div><label for="yearsExperience">Your years of experience</label><input id="yearsExperience" type="number" min="0" max="50"></div>
@@ -259,7 +260,7 @@ function jobHtml(j){
   return `<details class="job"><summary>
     <div class="score" style="--s:${m.score}"><span>${m.score}</span></div>
     <div><h3>${esc(j.title)} ${j.fixture ? '<span class="chip fixture">Fixture</span>' : ""}</h3>
-    <div class="meta">${esc(j.company)}, ${esc(j.remote ? (j.location || "Remote") + " (remote)" : j.location || "Location not listed")}</div></div></summary>
+    <div class="meta">${esc(j.company)}, ${esc(j.remote ? (j.location && !/remote/i.test(j.location) ? j.location + " (remote)" : "Remote") : j.location || "Location not listed")}</div></div></summary>
     <div class="detail">
       <h4>Matched skills</h4><div class="chips">${chips(m.matchedSkills,"ok") || '<span class="hint">None recognized</span>'}</div>
       <h4>Missing from your resume</h4><div class="chips">${chips(m.missingRequirements,"miss") || '<span class="hint">Nothing missing</span>'}</div>

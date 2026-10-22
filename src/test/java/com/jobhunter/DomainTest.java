@@ -47,7 +47,7 @@ class DomainTest {
         assertTrue(EligibilityFilter.reasons(job("Senior Back-end Engineer", "Bengaluru, India", false, null, "3+ years"), p).isEmpty());
         assertFalse(EligibilityFilter.reasons(job("Frontend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
         assertFalse(EligibilityFilter.reasons(job("Backend Engineer", "Pune", false, null, ""), p).isEmpty());
-        assertTrue(EligibilityFilter.reasons(job("Backend Engineer", "Germany", true, null, ""), p).isEmpty());
+        assertTrue(EligibilityFilter.reasons(job("Backend Engineer", "Worldwide", true, null, ""), p).isEmpty());
         assertFalse(EligibilityFilter.reasons(job("Backend Engineer", "Bengaluru", false, 8, ""), p).isEmpty());
         assertTrue(EligibilityFilter.reasons(job("Backend Engineer", "Bengaluru", false, 12, ""), p).isEmpty());
         // years required by the job is not a filter
@@ -126,5 +126,23 @@ class DomainTest {
         assertTrue(p.description().contains("TypeScript"));
         assertEquals(null, HnPostParser.parse("Just a general comment, no header here", "43"));
         assertFalse(HnPostParser.parse("Acme | Backend Engineer | Onsite only, Berlin", "44").remote());
+    }
+
+    @Test void decodesHtmlEntitiesInTitles() {
+        assertEquals("Python & Cloud Native Engineer's", JobNormalizer.stripHtml("Python &amp; Cloud Native Engineer&#39;s"));
+        assertEquals("It's", JobNormalizer.stripHtml("It&#x27;s"));
+    }
+
+    @Test void remoteJobsMustBeOpenToYourLocation() {
+        Preferences p = prefs(); // Bengaluru, remote ok
+        assertFalse(EligibilityFilter.reasons(job("Backend Engineer", "Z\u00fcrich", true, null, ""), p).isEmpty());
+        assertFalse(EligibilityFilter.reasons(job("Backend Engineer", "Germany", true, null, ""), p).isEmpty());
+        assertFalse(EligibilityFilter.reasons(job("Backend Engineer", "USA Only", true, null, ""), p).isEmpty());
+        assertFalse(EligibilityFilter.reasons(job("Backend Engineer", "Remote (US)", true, null, ""), p).isEmpty());
+        assertTrue(EligibilityFilter.reasons(job("Backend Engineer", "Worldwide", true, null, ""), p).isEmpty());
+        assertTrue(EligibilityFilter.reasons(job("Backend Engineer", "Remote", true, null, ""), p).isEmpty());
+        assertTrue(EligibilityFilter.reasons(job("Backend Engineer", "India", true, null, ""), p).isEmpty());
+        assertTrue(EligibilityFilter.reasons(job("Backend Engineer", "Bangalore, KA", false, null, ""), p).isEmpty());
+        assertTrue(EligibilityFilter.reasons(job("Backend Engineer", null, true, null, ""), p).isEmpty());
     }
 }

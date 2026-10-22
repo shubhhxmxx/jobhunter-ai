@@ -25,7 +25,11 @@ public class JobRepository {
 
     /** Inserts the posting, or refreshes retrieved_at if the same job (by source id or normalized company/title/place) exists. */
     public UUID upsert(JobPosting p) {
-        String key = JobNormalizer.dedupKey(p.company(), p.title(), p.location(), p.remote());
+        // Sources send HTML entities such as &amp; in titles; decode before storing and before building the dedup key.
+        String title = JobNormalizer.stripHtml(p.title());
+        String companyName = JobNormalizer.stripHtml(p.company());
+        String place = p.location() == null ? null : JobNormalizer.stripHtml(p.location());
+        String key = JobNormalizer.dedupKey(companyName, title, place, p.remote());
         OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
         Optional<UUID> existing = find(p, key);
         if (existing.isPresent()) {
@@ -35,13 +39,15 @@ public class JobRepository {
         UUID id = UUID.randomUUID();
         String desc = JobNormalizer.stripHtml(p.description());
         if (desc.length() > 20000) desc = desc.substring(0, 20000);
-        int[] sal = (p.salaryMin() == null && p.salaryMax() == null) ? SalaryParser.parseLpa(p.title() + " " + desc) : null;
-        Integer salMin = sal != null ? sal[0] : p.salaryMin(), salMax = sal != null ? sal[1] : p.salaryMax();
+        int[] sal = (p.salaryMin() == null && p.salaryMax() == null) ? SalaryParser.parseLpa(title + " " + desc) : null;
+        Integer salMin = p.salaryMin();
+        Integer salMax = p.salaryMax();
+        if (sal != null) { salMin = sal[0]; salMax = sal[1]; } // a ternary here would unbox a null Integer and throw
         try {
             jdbc.sql("INSERT INTO job(id,source,external_id,company_id,title,location,remote,salary_min,salary_max,description,source_url,dedup_key,status,retrieved_at) "
                             + "VALUES(:id,:s,:x,:c,:ti,:lo,:r,:smin,:smax,:d,:u,:k,'OPEN',:t)")
-                    .param("id", id).param("s", p.source()).param("x", p.externalId()).param("c", company(p.company()))
-                    .param("ti", truncate(p.title(), 500)).param("lo", truncate(p.location(), 300)).param("r", p.remote())
+                    .param("id", id).param("s", p.source()).param("x", p.externalId()).param("c", company(companyName))
+                    .param("ti", truncate(title, 500)).param("lo", truncate(place, 300)).param("r", p.remote())
                     .param("smin", salMin).param("smax", salMax).param("d", desc).param("u", truncate(p.url(), 2000))
                     .param("k", truncate(key, 900)).param("t", now).update();
             return id;
