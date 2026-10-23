@@ -21,9 +21,15 @@ class DomainTest {
             B.Tech
             """;
 
+    private static final Candidate CAND = new Candidate(4, new java.util.HashSet<>(ResumeParser.parse(RESUME).skills()));
+
+    private static List<String> reasons(JobPosting j, Preferences p) {
+        return EligibilityFilter.reasons(j, p, CAND);
+    }
+
     private static Preferences prefs() {
         return new Preferences(List.of("Backend Engineer", "Java Developer"), List.of("Bengaluru"), true,
-                10, null, List.of(), 60);
+                10, null, List.of(), true, true, 60);
     }
 
     private static JobPosting job(String title, String loc, boolean remote, Integer salaryMax, String desc) {
@@ -45,18 +51,19 @@ class DomainTest {
 
     @Test void filtersByTitleLocationSalaryAndExperience() {
         Preferences p = prefs();
-        assertTrue(EligibilityFilter.reasons(job("Senior Back-end Engineer", "Bengaluru, India", false, null, "3+ years"), p).isEmpty());
-        assertFalse(EligibilityFilter.reasons(job("Frontend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
-        assertFalse(EligibilityFilter.reasons(job("Backend Engineer", "Pune", false, null, ""), p).isEmpty());
-        assertTrue(EligibilityFilter.reasons(job("Backend Engineer", "Worldwide", true, null, ""), p).isEmpty());
-        assertFalse(EligibilityFilter.reasons(job("Backend Engineer", "Bengaluru", false, 8, ""), p).isEmpty());
-        assertTrue(EligibilityFilter.reasons(job("Backend Engineer", "Bengaluru", false, 12, ""), p).isEmpty());
-        // years required by the job is not a filter
-        assertTrue(EligibilityFilter.reasons(job("Backend Engineer", "Bengaluru", false, null, "10+ years of experience"), p).isEmpty());
+        assertTrue(reasons(job("Senior Back-end Engineer", "Bengaluru, India", false, null, "3+ years"), p).isEmpty());
+        assertFalse(reasons(job("Frontend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
+        assertTrue(reasons(job("Backend Engineer", "Pune", false, null, ""), p).isEmpty()); // other Indian city: shown, flagged as relocation
+        assertTrue(reasons(job("Backend Engineer", "Worldwide", true, null, ""), p).isEmpty());
+        assertFalse(reasons(job("Backend Engineer", "Bengaluru", false, 8, ""), p).isEmpty());
+        assertTrue(reasons(job("Backend Engineer", "Bengaluru", false, 12, ""), p).isEmpty());
+        // experience far above yours is a hard filter
+        assertFalse(reasons(job("Backend Engineer", "Bengaluru", false, null, "10+ years of experience"), p).isEmpty());
     }
 
-    @Test void unknownSalaryAndLocationDoNotRejectJobs() {
-        assertTrue(EligibilityFilter.reasons(job("Backend Engineer", null, false, null, "no details"), prefs()).isEmpty());
+    @Test void unknownSalaryPassesButUnknownLocationDoesNot() {
+        assertTrue(reasons(job("Backend Engineer", "Bengaluru", false, null, "no details"), prefs()).isEmpty());
+        assertFalse(reasons(job("Backend Engineer", null, false, null, "no details"), prefs()).isEmpty());
     }
 
     @Test void scoreIsExplainableAndBounded() {
@@ -144,28 +151,28 @@ class DomainTest {
 
     @Test void remoteJobsMustBeOpenToYourLocation() {
         Preferences p = prefs(); // Bengaluru, remote ok
-        assertFalse(EligibilityFilter.reasons(job("Backend Engineer", "Z\u00fcrich", true, null, ""), p).isEmpty());
-        assertFalse(EligibilityFilter.reasons(job("Backend Engineer", "Germany", true, null, ""), p).isEmpty());
-        assertFalse(EligibilityFilter.reasons(job("Backend Engineer", "USA Only", true, null, ""), p).isEmpty());
-        assertFalse(EligibilityFilter.reasons(job("Backend Engineer", "Remote (US)", true, null, ""), p).isEmpty());
-        assertTrue(EligibilityFilter.reasons(job("Backend Engineer", "Worldwide", true, null, ""), p).isEmpty());
-        assertTrue(EligibilityFilter.reasons(job("Backend Engineer", "Remote", true, null, ""), p).isEmpty());
-        assertTrue(EligibilityFilter.reasons(job("Backend Engineer", "India", true, null, ""), p).isEmpty());
-        assertTrue(EligibilityFilter.reasons(job("Backend Engineer", "Bangalore, KA", false, null, ""), p).isEmpty());
-        assertTrue(EligibilityFilter.reasons(job("Backend Engineer", null, true, null, ""), p).isEmpty());
+        assertFalse(reasons(job("Backend Engineer", "Z\u00fcrich", true, null, ""), p).isEmpty());
+        assertFalse(reasons(job("Backend Engineer", "Germany", true, null, ""), p).isEmpty());
+        assertFalse(reasons(job("Backend Engineer", "USA Only", true, null, ""), p).isEmpty());
+        assertFalse(reasons(job("Backend Engineer", "Remote (US)", true, null, ""), p).isEmpty());
+        assertTrue(reasons(job("Backend Engineer", "Worldwide", true, null, ""), p).isEmpty());
+        assertTrue(reasons(job("Backend Engineer", "Remote", true, null, ""), p).isEmpty());
+        assertTrue(reasons(job("Backend Engineer", "India", true, null, ""), p).isEmpty());
+        assertTrue(reasons(job("Backend Engineer", "Bangalore, KA", false, null, ""), p).isEmpty());
+        assertTrue(reasons(job("Backend Engineer", null, true, null, ""), p).isEmpty());
     }
 
     @Test void skipsExcludedSeniorityLevels() {
-        Preferences p = new Preferences(List.of("Backend Engineer"), List.of("Bengaluru"), true, null, null, List.of("staff", "principal"), 60);
-        assertFalse(EligibilityFilter.reasons(job("Staff Backend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
-        assertFalse(EligibilityFilter.reasons(job("Principal Backend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
-        assertTrue(EligibilityFilter.reasons(job("Senior Backend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
-        assertTrue(EligibilityFilter.reasons(job("Backend Engineer", "Bengaluru", false, null, "Our staff are great"), p).isEmpty());
+        Preferences p = new Preferences(List.of("Backend Engineer"), List.of("Bengaluru"), true, null, null, List.of("staff", "principal"), true, true, 60);
+        assertFalse(reasons(job("Staff Backend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
+        assertFalse(reasons(job("Principal Backend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
+        assertTrue(reasons(job("Senior Backend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
+        assertTrue(reasons(job("Backend Engineer", "Bengaluru", false, null, "Our staff are great"), p).isEmpty());
     }
 
     @Test void jobsAskingFarMoreYearsRankClearlyLower() {
         ParsedResume r = ResumeParser.parse(RESUME); // about 4 years
-        Preferences p = new Preferences(List.of("Backend Engineer"), List.of("Bengaluru"), true, null, 3, List.of(), 60);
+        Preferences p = new Preferences(List.of("Backend Engineer"), List.of("Bengaluru"), true, null, 3, List.of(), true, true, 60);
         String skills = "Java Spring Kafka Redis. ";
         MatchResult fits = MatchScorer.score(job("Backend Engineer", "Bengaluru", false, null, skills + "2+ years"), r, p);
         MatchResult stretch = MatchScorer.score(job("Backend Engineer", "Bengaluru", false, null, skills + "4+ years"), r, p);
@@ -189,5 +196,92 @@ class DomainTest {
         assertTrue(JobNormalizer.titleMatches("Senior Backend Developer", List.of("Backend Engineer")));
         assertTrue(JobNormalizer.titleMatches("Java Engineer", List.of("Java Developer")));
         assertFalse(JobNormalizer.titleMatches("Frontend Developer", List.of("Backend Engineer")));
+    }
+
+    private static Preferences india(boolean otherCities, boolean abroad) {
+        return new Preferences(List.of("Backend Engineer", "Software Engineer"), List.of("Bengaluru"), true, null, null,
+                List.of(), otherCities, abroad, 60);
+    }
+
+    @Test void otherIndianCitiesAreFlaggedAsRelocation() {
+        JobPosting pune = job("Backend Engineer", "Pune, Maharashtra", false, null, "");
+        assertTrue(reasons(pune, india(true, true)).isEmpty());
+        LocationInfo li = LocationInfo.classify(pune, india(true, true));
+        assertEquals("india_other_city", li.mode());
+        assertTrue(li.relocation());
+        assertTrue(li.label().contains("relocate"));
+        assertFalse(reasons(pune, india(false, true)).isEmpty());
+        assertFalse(LocationInfo.classify(job("Backend Engineer", "Bengaluru", false, null, ""), india(true, true)).relocation());
+    }
+
+    @Test void abroadNeedsExplicitVisaSponsorship() {
+        Preferences p = india(true, true);
+        assertFalse(reasons(job("Backend Engineer", "Berlin, Germany", false, null, "Great team."), p).isEmpty());
+        assertFalse(reasons(job("Backend Engineer", "Berlin, Germany", false, null, "No visa sponsorship available."), p).isEmpty());
+        JobPosting sponsored = job("Backend Engineer", "Berlin, Germany", false, null, "We offer visa sponsorship and relocation support.");
+        assertTrue(reasons(sponsored, p).isEmpty());
+        assertEquals("abroad_visa", LocationInfo.classify(sponsored, p).mode());
+        assertTrue(LocationInfo.classify(sponsored, p).relocation());
+        assertFalse(reasons(sponsored, india(true, false)).isEmpty());
+        JobPosting remoteUs = job("Backend Engineer", "USA Only", true, null, "We sponsor work visas.");
+        assertTrue(reasons(remoteUs, p).isEmpty());
+        assertTrue(LocationInfo.classify(remoteUs, p).label().contains("must live in"));
+        assertFalse(reasons(job("Backend Engineer", "USA Only", true, null, "Great team."), p).isEmpty());
+    }
+
+    @Test void visaSponsoringAndLocalJobsRankHigher() {
+        ParsedResume r = ResumeParser.parse(RESUME);
+        String d = "Java Spring Kafka Redis. 4+ years of experience. ";
+        int abroadVisa = MatchScorer.score(job("Backend Engineer", "Berlin, Germany", false, null, d + "We offer visa sponsorship."), r, india(true, true)).score();
+        int worldwide = MatchScorer.score(job("Backend Engineer", "Worldwide", true, null, d), r, india(true, true)).score();
+        int local = MatchScorer.score(job("Backend Engineer", "Bengaluru", false, null, d), r, india(true, true)).score();
+        assertTrue(abroadVisa > worldwide, abroadVisa + " vs " + worldwide);
+        assertTrue(local < abroadVisa + 1 && local > worldwide, local + "");
+    }
+
+    @Test void detectsVisaWording() {
+        assertEquals(VisaDetector.Visa.YES, VisaDetector.detect("We provide visa sponsorship"));
+        assertEquals(VisaDetector.Visa.YES, VisaDetector.detect("Relocation assistance included"));
+        assertEquals(VisaDetector.Visa.NO, VisaDetector.detect("We do not offer visa sponsorship"));
+        assertEquals(VisaDetector.Visa.NO, VisaDetector.detect("Unable to sponsor. Must be authorized to work in the US"));
+        assertEquals(VisaDetector.Visa.UNKNOWN, VisaDetector.detect("Great team, free lunch"));
+    }
+
+    @Test void experienceMustBeWithinOneYearOfYours() { // candidate has 4 years
+        Preferences p = india(true, true);
+        assertTrue(reasons(job("Backend Engineer", "Bengaluru", false, null, "3+ years of experience"), p).isEmpty());
+        assertTrue(reasons(job("Backend Engineer", "Bengaluru", false, null, "5+ years of experience"), p).isEmpty());
+        assertFalse(reasons(job("Backend Engineer", "Bengaluru", false, null, "6+ years of experience"), p).isEmpty());
+        assertFalse(reasons(job("Backend Engineer", "Bengaluru", false, null, "2+ years of experience"), p).isEmpty());
+        assertTrue(reasons(job("Backend Engineer", "Bengaluru", false, null, "No years stated"), p).isEmpty());
+        // the overall requirement wins over a smaller per-skill figure
+        assertFalse(reasons(job("Backend Engineer", "Bengaluru", false, null, "2+ years Kafka experience. 7+ years of professional experience as a software engineer."), p).isEmpty());
+        assertEquals(7, SkillExtractor.requiredYears("7+ years of professional experience as a software engineer, led projects (roughly 3+ months)"));
+    }
+
+    @Test void offProfileRolesAreDropped() {
+        Preferences p = india(true, true);
+        for (String t : List.of("UI Software Engineer", "Software Engineer in Test", "Embedded Software Engineer (C++)",
+                "Android Software Engineer", "Software Engineer, QA Automation"))
+            assertFalse(reasons(job(t, "Bengaluru", false, null, ""), p).isEmpty(), t);
+        assertTrue(reasons(job("Software Engineer, Backend", "Bengaluru", false, null, ""), p).isEmpty());
+        // allowed when you asked for it
+        Preferences wantsUi = new Preferences(List.of("UI Engineer"), List.of("Bengaluru"), true, null, null, List.of(), true, true, 60);
+        assertTrue(reasons(job("UI Engineer", "Bengaluru", false, null, ""), wantsUi).isEmpty());
+    }
+
+    @Test void jobsFarFromYourResumeAreDropped() {
+        Preferences p = india(true, true);
+        assertFalse(reasons(job("Backend Engineer", "Bengaluru", false, null, "Python Django AWS Docker Kubernetes"), p).isEmpty());
+        assertTrue(reasons(job("Backend Engineer", "Bengaluru", false, null, "Java Spring Kafka Docker"), p).isEmpty());
+        assertFalse(reasons(job("Backend Engineer", "Bengaluru", false, null, "Rust and Go"), p).isEmpty());
+    }
+
+    @Test void levelsThatCannotFitYourExperienceAreAlwaysSkipped() {
+        Preferences p = india(true, true); // no manual exclusions
+        assertFalse(reasons(job("Principal Backend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
+        assertFalse(reasons(job("Lead Backend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
+        assertFalse(reasons(job("Junior Backend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
+        assertTrue(reasons(job("Senior Backend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
     }
 }

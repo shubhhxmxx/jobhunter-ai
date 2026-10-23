@@ -4,105 +4,128 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>JobHunter AI</title>
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('jh_theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}catch(e){document.documentElement.dataset.theme='light'}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Schibsted+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#e8edf1;--card:#fff;--ink:#10212f;--mute:#5b6b78;--line:#cdd6dd;--pine:#1f6f5c;--pine-bg:#dcefe9;--brick:#a8402c;--brick-bg:#f6e2dd;--amber:#8a6100;--amber-bg:#f8edcf;--blue:#1d4ed8}
-@media (prefers-color-scheme:dark){:root{--bg:#0e1820;--card:#16242f;--ink:#e6edf2;--mute:#97a8b5;--line:#2a3b48;--pine:#6fd0b4;--pine-bg:#173b32;--brick:#f09a88;--brick-bg:#3b1f1a;--amber:#e8c15a;--amber-bg:#3a2f12;--blue:#8fb0ff}}
+:root{--bg:#fff3d9;--dot:rgba(27,19,64,.11);--card:#fff;--field:#fffbf0;--ink:#1b1340;--mute:#5e5784;--line:#1b1340;--soft:rgba(27,19,64,.18);--shadow:#1b1340;
+--violet:#6b4cf6;--on-violet:#fff;--coral:#ff5a7a;--sun:#ffc933;--mint:#1fbf8f;--link:#4b2fd1;
+--mint-bg:#c9f7e8;--mint-ink:#0b6b50;--coral-bg:#ffd9df;--coral-ink:#a3122f;--sun-bg:#fff0b8;--sun-ink:#6b4b00;color-scheme:light}
+:root[data-theme=dark]{--bg:#120e2b;--dot:rgba(155,132,255,.14);--card:#1d1744;--field:#15103a;--ink:#f3eeff;--mute:#b3a9db;--line:#4a3f8f;--soft:rgba(155,132,255,.25);--shadow:#6b4cf6;
+--violet:#9b84ff;--on-violet:#120e2b;--coral:#ff8ca3;--sun:#ffd65c;--mint:#4fe3b5;--link:#b7a6ff;
+--mint-bg:#12382f;--mint-ink:#6ff0c6;--coral-bg:#3f1830;--coral-ink:#ff9db0;--sun-bg:#3d3210;--sun-ink:#ffd66b;color-scheme:dark}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Schibsted Grotesk",system-ui,sans-serif}
+body{margin:0;background:var(--bg);background-image:radial-gradient(var(--dot) 1.3px,transparent 1.3px);background-size:22px 22px;color:var(--ink);font:16px/1.5 "Schibsted Grotesk",system-ui,sans-serif;transition:background-color .25s,color .25s}
+h1,h2,h3,.score{font-family:"Bricolage Grotesque","Schibsted Grotesk",system-ui,sans-serif}
 h1,h2,h3{margin:0;line-height:1.15}
-h1{font-size:1.5rem;font-weight:800;letter-spacing:-.02em}
-h2{font-size:1.05rem;font-weight:700;margin-bottom:.75rem}
-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem clamp(1rem,3vw,2rem);border-bottom:1px solid var(--line)}
+h1{font-size:1.8rem;font-weight:800;letter-spacing:-.03em}
+.logo{display:inline-block;transform:rotate(-10deg)}
+h2{font-size:1.2rem;font-weight:800;margin-bottom:.75rem}
+header{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem clamp(1rem,3vw,2rem);border-bottom:3px solid var(--line);background:var(--card)}
 header small{color:var(--mute)}
-main{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:1.25rem;padding:1.25rem clamp(1rem,3vw,2rem);max-width:1200px;margin:auto}
+.hdr{display:flex;gap:.5rem}
+.hdr button{margin-top:0}
+main{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:1.4rem;padding:1.4rem clamp(1rem,3vw,2rem);max-width:1200px;margin:auto}
 @media (max-width:860px){main{grid-template-columns:1fr}}
-section.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin-bottom:1rem}
-label{display:block;font-size:.9rem;font-weight:500;margin:.7rem 0 .25rem}
-input[type=text],input[type=email],input[type=number],input[type=password],textarea,select{width:100%;padding:.55rem .65rem;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit}
-input:focus-visible,button:focus-visible,summary:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:1px}
+section.card{background:var(--card);border:2.5px solid var(--line);border-radius:16px;box-shadow:5px 5px 0 var(--shadow);padding:1rem 1.1rem;margin-bottom:1.4rem}
+label{display:block;font-size:.9rem;font-weight:700;margin:.7rem 0 .25rem}
+input[type=text],input[type=email],input[type=number],input[type=password],textarea,select{width:100%;padding:.55rem .7rem;border:2px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink);font:inherit}
+input[type=range]{accent-color:var(--violet);flex:1;min-width:120px}
+input[type=checkbox]{accent-color:var(--violet)}
+input:focus-visible,button:focus-visible,summary:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
-button{font:inherit;font-weight:700;border:0;border-radius:6px;padding:.6rem 1rem;background:var(--ink);color:var(--bg);cursor:pointer;margin-top:.9rem}
-button.secondary{background:transparent;color:var(--ink);border:1px solid var(--line)}
-button:disabled{opacity:.45;cursor:not-allowed}
-.hint{color:var(--mute);font-size:.85rem;margin:.3rem 0 0}
-.chips{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.4rem}
-.chip{font-size:.8rem;padding:.1rem .5rem;border-radius:99px;border:1px solid var(--line)}
-.chip.ok{background:var(--pine-bg);color:var(--pine);border-color:transparent}
-.chip.miss{background:var(--brick-bg);color:var(--brick);border-color:transparent}
-.chip.warn{background:var(--amber-bg);color:var(--amber);border-color:transparent;font-weight:700}
-.warnline{color:var(--amber)}
-.chip.fixture{background:var(--amber-bg);color:var(--amber);border-color:transparent;font-weight:700}
-.keybox{background:var(--amber-bg);color:var(--ink);padding:.6rem;border-radius:6px;word-break:break-all;font-family:ui-monospace,monospace;font-size:.85rem}
-.job{border-top:1px solid var(--line);padding:.9rem 0}
+button{font:inherit;font-weight:800;border:2.5px solid var(--line);border-radius:12px;padding:.6rem 1rem;background:var(--violet);color:var(--on-violet);cursor:pointer;margin-top:.9rem;box-shadow:3px 3px 0 var(--shadow);transition:transform .12s,box-shadow .12s}
+button:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--shadow)}
+button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--shadow)}
+button.secondary{background:var(--card);color:var(--ink)}
+button:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:3px 3px 0 var(--shadow)}
+#runBtn{background:var(--coral);color:#1b1340}
+.hint{color:var(--mute);font-size:.86rem;margin:.3rem 0 0}
+a{color:var(--link);font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.4rem}
+.chip{font-size:.8rem;font-weight:700;padding:.1rem .6rem;border-radius:99px;border:2px solid var(--soft)}
+.chip.ok{background:var(--mint-bg);color:var(--mint-ink);border-color:transparent}
+.chip.miss{background:var(--coral-bg);color:var(--coral-ink);border-color:transparent}
+.chip.fixture,.chip.warn{background:var(--sun-bg);color:var(--sun-ink);border-color:transparent}
+.keybox{background:var(--sun);color:#1b1340;padding:.6rem;border-radius:10px;border:2px solid var(--line);word-break:break-all;font-family:ui-monospace,monospace;font-size:.85rem}
+.job{border-top:2px dashed var(--soft);padding:.9rem 0}
 .job:first-child{border-top:0}
 .job summary{cursor:pointer;list-style:none;display:grid;grid-template-columns:auto 1fr;gap:.9rem;align-items:center}
 .job summary::-webkit-details-marker{display:none}
-.score{width:3.4rem;height:3.4rem;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:1.15rem;background:conic-gradient(var(--pine) calc(var(--s)*1%),var(--line) 0);position:relative}
-.score span{position:absolute;inset:.28rem;border-radius:50%;background:var(--card);display:grid;place-items:center}
-.job h3{font-size:1rem}
+.score{--ring:var(--coral);width:3.7rem;height:3.7rem;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:1.2rem;background:conic-gradient(var(--ring) calc(var(--s)*1%),var(--soft) 0);position:relative}
+.score.hi{--ring:var(--mint)}.score.mid{--ring:var(--sun)}.score.lo{--ring:var(--coral)}
+.score span{position:absolute;inset:.3rem;border-radius:50%;background:var(--card);display:grid;place-items:center}
+.job h3{font-size:1.02rem}
 .meta{color:var(--mute);font-size:.88rem}
-.detail{padding:.8rem 0 0 4.3rem;font-size:.92rem}
+.detail{padding:.8rem 0 0 4.6rem;font-size:.92rem}
 .detail h4{margin:.8rem 0 .2rem;font-size:.9rem}
-.detail blockquote{margin:.25rem 0;padding-left:.7rem;border-left:3px solid var(--line);color:var(--mute)}
-.detail a{color:var(--blue)}
+.detail blockquote{margin:.25rem 0;padding-left:.7rem;border-left:4px solid var(--violet);color:var(--mute)}
+.warnline{color:var(--sun-ink);background:var(--sun-bg);border-radius:8px;padding:.2rem .5rem;margin:.2rem 0}
 @media (max-width:520px){.detail{padding-left:0}}
-#toast{position:fixed;left:50%;bottom:1rem;transform:translateX(-50%);max-width:90vw;background:var(--brick);color:#fff;padding:.6rem 1rem;border-radius:8px;display:none}
+#toast{position:fixed;left:50%;bottom:1rem;transform:translateX(-50%);max-width:90vw;background:var(--coral);color:#1b1340;font-weight:700;border:2.5px solid var(--line);box-shadow:4px 4px 0 var(--shadow);padding:.6rem 1rem;border-radius:12px;display:none;z-index:10}
 .empty{color:var(--mute);padding:1.5rem 0}
 .bar{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
-.bar output{font-weight:700;min-width:2.2rem}
-@media (prefers-reduced-motion:no-preference){.score{transition:background .4s}}
+.bar output{font-weight:800;min-width:2.2rem}
+@media (prefers-reduced-motion:no-preference){
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+.job{animation:pop .35s ease backwards}
+.job:nth-child(2){animation-delay:.04s}.job:nth-child(3){animation-delay:.08s}.job:nth-child(4){animation-delay:.12s}.job:nth-child(5){animation-delay:.16s}
+.logo{animation:wiggle 4s ease-in-out infinite}
+@keyframes wiggle{0%,90%,100%{transform:rotate(-10deg)}95%{transform:rotate(8deg)}}}
 </style>
 </head>
 <body>
-<header><div><h1>JobHunter AI</h1><small>Find jobs that fit your resume, with the reasoning shown.</small></div><button class="secondary" id="signout" hidden>Sign out</button></header>
+<header><div><h1>JobHunter AI <span class="logo">🎯</span></h1><small>Find jobs that fit your resume, with the reasoning shown.</small></div>
+<div class="hdr"><button class="secondary" id="theme" aria-label="Switch to night mode" title="Night mode">🌙</button><button class="secondary" id="signout" hidden>Sign out</button></div></header>
 <main>
 <div>
   <section class="card" id="setup">
-    <h2>Create your profile</h2>
+    <h2>🙋 Create your profile</h2>
     <label for="name">Name</label><input id="name" type="text" autocomplete="name">
     <label for="email">Email</label><input id="email" type="email" autocomplete="email">
     <button id="setupBtn">Create profile</button>
     <p class="hint">Already have a key? <a href="#" id="haveKey">Paste it here</a>.</p>
   </section>
   <section class="card" id="keyCard" hidden>
-    <h2>Your API key</h2>
+    <h2>🔑 Your API key</h2>
     <div class="keybox" id="keyShown"></div>
     <p class="hint">Shown once. The browser stores it so you stay signed in; the server keeps only a hash.</p>
   </section>
 
   <section class="card" data-needs-key>
-    <h2>Resume</h2>
+    <h2>📄 Resume</h2>
     <input id="file" type="file" accept="application/pdf" aria-label="Resume PDF">
     <button id="uploadBtn">Upload PDF</button>
     <div id="resumes" class="hint"></div>
   </section>
 
   <section class="card" data-needs-key id="insights" hidden>
-    <h2>From your resume</h2>
+    <h2>🧠 From your resume</h2>
     <div id="insightBody"></div>
     <button class="secondary" id="useRoles">Use these as my targets</button>
   </section>
 
   <section class="card" data-needs-key>
-    <h2>What you want</h2>
+    <h2>🎯 What you want</h2>
     <label for="titles">Target titles (one per line)</label><textarea id="titles" rows="3" placeholder="Backend Engineer"></textarea>
     <label for="locations">Locations (one per line)</label><textarea id="locations" rows="2" placeholder="Bengaluru"></textarea>
     <p class="hint">Remote jobs are kept only if open worldwide or to one of these places. Indian cities also match "India".</p>
     <label><input type="checkbox" id="remoteOk" checked> Include remote roles</label>
+    <label><input type="checkbox" id="openToIndia" checked> Show other Indian cities (marked as relocation)</label>
+    <label><input type="checkbox" id="openToAbroad" checked> Show jobs abroad only if they offer visa sponsorship</label>
     <label>Skip these levels</label>
     <div class="chips" id="levels"></div>
     <div class="row">
       <div><label for="yearsExperience">Your years of experience</label><input id="yearsExperience" type="number" min="0" max="50"></div>
       <div><label for="salaryFloor">Salary floor (LPA)</label><input id="salaryFloor" type="number" min="0" max="500" placeholder="e.g. 25"></div>
     </div>
+    <p class="hint">Jobs asking for more than 1 year above or below your experience are hidden. Roles from other fields (UI, test, embedded, mobile) and jobs that match too few of your skills are hidden too.</p>
     <p class="hint">Floor in lakh rupees per year. Only applied to jobs that state a salary in LPA or lakhs. Jobs with no salary, or paid in other currencies, are kept.</p>
     <button id="savePrefs">Save preferences</button>
   </section>
 
   <section class="card" data-needs-key>
-    <h2>AI provider (optional)</h2>
+    <h2>🤖 AI provider (optional)</h2>
     <p class="hint" id="llmState">Matching works without a key. A key is only stored for upcoming drafting features.</p>
     <label for="provider">Provider</label><select id="provider"><option value="anthropic">anthropic</option></select>
     <label for="model">Model</label><input id="model" type="text" value="claude-sonnet-4-5">
@@ -123,7 +146,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
     <p class="hint" id="runState" role="status" aria-live="polite">No search run yet.</p>
   </section>
   <section class="card" data-needs-key>
-    <h2>Ranked matches</h2>
+    <h2>🏆 Ranked matches</h2>
     <div id="jobs"><div class="empty">Upload a resume, set your preferences, then search.</div></div>
   </section>
 </div>
@@ -134,6 +157,15 @@ button:disabled{opacity:.45;cursor:not-allowed}
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let key = localStorage.getItem("jh_key") || "";
+
+function applyTheme(t){
+  document.documentElement.dataset.theme = t;
+  $("theme").textContent = t === "dark" ? "☀️" : "🌙";
+  $("theme").setAttribute("aria-label", t === "dark" ? "Switch to day mode" : "Switch to night mode");
+  $("theme").title = t === "dark" ? "Day mode" : "Night mode";
+}
+$("theme").onclick = () => { const n = document.documentElement.dataset.theme === "dark" ? "light" : "dark"; localStorage.setItem("jh_theme", n); applyTheme(n); };
+applyTheme(document.documentElement.dataset.theme || "light");
 
 function toast(msg){const t=$("toast");t.textContent=msg;t.style.display="block";clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display="none",5000)}
 async function api(path, opts={}){
@@ -207,14 +239,14 @@ $("uploadBtn").onclick = guard(async () => {
 async function loadPrefs(){
   const p = await api("/preferences");
   $("titles").value = p.targetTitles.join("\n"); $("locations").value = p.locations.join("\n");
-  $("remoteOk").checked = p.remoteOk;
+  $("remoteOk").checked = p.remoteOk; $("openToIndia").checked = p.openToIndia; $("openToAbroad").checked = p.openToAbroad;
   document.querySelectorAll("#levels input").forEach(i => i.checked = (p.excludedLevels||[]).includes(i.value));
   for (const k of ["yearsExperience","salaryFloor"]) $(k).value = p[k] ?? "";
   $("threshold").value = p.minMatchScore; $("thVal").textContent = p.minMatchScore;
 }
 $("savePrefs").onclick = guard(async () => {
   await api("/preferences", {method:"PUT", json:{targetTitles:lines($("titles").value), locations:lines($("locations").value),
-    remoteOk:$("remoteOk").checked, yearsExperience:numOrNull("yearsExperience"), salaryFloor:numOrNull("salaryFloor"), excludedLevels:pickedLevels()}});
+    remoteOk:$("remoteOk").checked, yearsExperience:numOrNull("yearsExperience"), salaryFloor:numOrNull("salaryFloor"), excludedLevels:pickedLevels(), openToIndia:$("openToIndia").checked, openToAbroad:$("openToAbroad").checked}});
   toast("Preferences saved. Run a search to apply them.");
 });
 
@@ -244,8 +276,8 @@ $("runBtn").onclick = guard(async () => {
     let msg;
     if (run.status === "FAILED") msg = "Search failed. " + (run.error||"") + " " + failed.join(" ");
     else {
-      msg = `Found ${run.jobsFound} jobs. ${run.eligible ?? "?"} passed your filters, ${run.jobsMatched} score ${run.minScore}+.`;
-      const f = run.filteredOut || {}, names = {title:"title", location:"location", remote:"remote off", salary:"salary", level:"seniority"};
+      msg = `${run.jobsMatched > 0 ? "🎉 " : ""}Found ${run.jobsFound} jobs. ${run.eligible ?? "?"} passed your filters, ${run.jobsMatched} score ${run.minScore}+.`;
+      const f = run.filteredOut || {}, names = {title:"title", location:"location", remote:"remote off", salary:"salary", level:"seniority", role:"off-profile role", visa:"abroad without visa", years:"experience mismatch", skills:"too few matching skills"};
       const parts = Object.keys(f).map(k => `${names[k]} ${f[k]}`);
       if (parts.length) msg += " Filtered out by: " + parts.join(", ") + ".";
       if (run.eligible > 0 && run.jobsMatched === 0) msg += " Lower the minimum match to see them.";
@@ -262,14 +294,18 @@ async function loadJobs(){
   const jobs = await api("/jobs?limit=200");
   $("jobs").innerHTML = jobs.length ? jobs.map(jobHtml).join("") : '<div class="empty">No matches at this threshold. Lower the minimum match, widen your titles, or run a search.</div>';
 }
+const MODE_SHORT = {same_city:"📍 In your city", india_other_city:"🧳 Relocate within India", remote_india:"🏠 Remote, India", remote_worldwide:"🌍 Remote", abroad_visa:"🛂 Abroad, visa offered"};
+const VISA_TEXT = {YES:"Visa sponsorship or relocation support is offered.", NO:"The posting says it will not sponsor a visa.", UNKNOWN:"Visa sponsorship is not mentioned."};
 function jobHtml(j){
   const m = j.match;
   const chips = (arr, cls) => arr.map(s => `<span class="chip ${cls}">${esc(s)}</span>`).join("");
   return `<details class="job"><summary>
-    <div class="score" style="--s:${m.score}"><span>${m.score}</span></div>
+    <div class="score ${m.score >= 80 ? "hi" : m.score >= 65 ? "mid" : "lo"}" style="--s:${m.score}"><span>${m.score}</span></div>
     <div><h3>${esc(j.title)} ${j.fixture ? '<span class="chip fixture">Fixture</span>' : ""}${(j.warnings||[]).length ? ' <span class="chip warn" title="See details">Check listing</span>' : ""}</h3>
+    ${m.workMode && MODE_SHORT[m.workMode] ? `<div class="chips"><span class="chip ${m.relocation ? "warn" : "ok"}">${MODE_SHORT[m.workMode]}</span></div>` : ""}
     <div class="meta">${esc(j.company)}, ${esc(j.remote ? (j.location && !/remote/i.test(j.location) ? j.location + " (remote)" : "Remote") : j.location || "Location not listed")}</div></div></summary>
     <div class="detail">
+      ${m.workLabel ? `<h4>Where you would work</h4><div class="hint ${m.relocation ? "warnline" : ""}">${esc(m.workLabel)}</div>${m.workMode === "abroad_visa" || m.visa === "NO" ? `<div class="hint">${VISA_TEXT[m.visa] || ""}</div>` : ""}` : ""}
       <h4>Matched skills</h4><div class="chips">${chips(m.matchedSkills,"ok") || '<span class="hint">None recognized</span>'}</div>
       <h4>Missing from your resume</h4><div class="chips">${chips(m.missingRequirements,"miss") || '<span class="hint">Nothing missing</span>'}</div>
       ${m.evidence.length ? "<h4>Evidence in the posting</h4>" + m.evidence.map(e => `<blockquote>${esc(e)}</blockquote>`).join("") : ""}

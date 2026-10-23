@@ -36,6 +36,10 @@ public final class SkillExtractor {
     private static final Pattern YEARS =
             Pattern.compile("(\\d{1,2})\\s*(?:\\+|-\\s*\\d{1,2}|to\\s*\\d{1,2})?\\s*(?:years?|yrs?)");
 
+    private static final Pattern YEARS_NEAR_EXPERIENCE = Pattern.compile(
+            "(\\d{1,2})\\s*(?:\\+|-\\s*\\d{1,2}|to\\s*\\d{1,2})?\\s*(?:years?|yrs?)[^.\\n]{0,60}?experience"
+                    + "|experience[^.\\n]{0,60}?(\\d{1,2})\\s*(?:\\+|-\\s*\\d{1,2}|to\\s*\\d{1,2})?\\s*(?:years?|yrs?)");
+
     private SkillExtractor() {}
 
     public static Set<String> extract(String text) {
@@ -45,10 +49,21 @@ public final class SkillExtractor {
         return found;
     }
 
-    /** Smallest "N years" figure in a job description (the stated minimum), or null if none. */
+    /**
+     * Years of experience a job asks for. Prefers figures written next to the word "experience" (the largest, since that is
+     * the overall requirement); otherwise the smallest "N years" figure. Null if none.
+     */
     public static Integer requiredYears(String text) {
+        String t = text == null ? "" : text.toLowerCase();
+        Integer best = null;
+        Matcher near = YEARS_NEAR_EXPERIENCE.matcher(t);
+        while (near.find()) {
+            int v = Integer.parseInt(near.group(1) != null ? near.group(1) : near.group(2));
+            if (v >= 1 && v <= 30 && (best == null || v > best)) best = v;
+        }
+        if (best != null) return best;
         Integer min = null;
-        Matcher m = YEARS.matcher(text == null ? "" : text.toLowerCase());
+        Matcher m = YEARS.matcher(t);
         while (m.find()) {
             int v = Integer.parseInt(m.group(1));
             if (v >= 1 && v <= 30 && (min == null || v < min)) min = v;

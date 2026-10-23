@@ -22,4 +22,4 @@ jobhunter:
     adzuna-app-id: ${JOBHUNTER_ADZUNA_APP_ID:}
     adzuna-app-key: ${JOBHUNTER_ADZUNA_APP_KEY:}
     adzuna-country: ${JOBHUNTER_ADZUNA_COUNTRY:in}
-    arbeitnow-enabled: ${JOBHUNTER_ARBEITNOW:true}
+    arbeitnow-enabled: ${JOBHUNTER_ARBEITNOW:false}

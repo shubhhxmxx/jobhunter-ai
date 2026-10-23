@@ -1,20 +1,12 @@
 package com.jobhunter.domain;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Set;
-import java.util.regex.Pattern;
+import java.util.*;
 
-/** Hard, deterministic eligibility rules. Runs before scoring and never calls an LLM. Unknown data passes. */
+/**
+ * Hard, deterministic rules. A job that fails any of them is never shown. Runs before scoring and never calls an LLM.
+ * Unknown data passes, except where the rule is about being close to you (location, visa, skills).
+ */
 public final class EligibilityFilter {
-    private static final Pattern OPEN_REMOTE = Pattern.compile(
-            "worldwide|anywhere|global|everywhere|^\\s*remote\\b(?!.*(\\(|\\bonly\\b|\\bus\\b|\\busa\\b|\\beu\\b|\\buk\\b|\\beurope\\b|\\bcanada\\b))");
-    private static final Set<String> INDIAN_CITIES = Set.of("bengaluru", "bangalore", "mumbai", "delhi", "new delhi", "ncr", "gurgaon",
-            "gurugram", "noida", "hyderabad", "pune", "chennai", "kolkata", "ahmedabad");
-
     /** Seniority levels a candidate can exclude, with the title words that identify each. */
     public static final Map<String, Set<String>> LEVELS = Map.of(
             "intern", Set.of("intern", "internship", "trainee", "werkstudent", "praktikum"),
@@ -24,49 +16,55 @@ public final class EligibilityFilter {
             "staff", Set.of("staff"),
             "principal", Set.of("principal"),
             "manager", Set.of("manager"),
-            "director", Set.of("director", "vp"));
+            "director", Set.of("director", "vp"),
+            "architect", Set.of("architect"));
+
+    /** Required experience must be within this many years of the candidate's own. */
+    public static final int EXPERIENCE_BAND = 1;
 
     private EligibilityFilter() {}
 
-    /** Target locations plus obvious aliases: Bengaluru/Bangalore, and "india" for any Indian city. */
-    static Set<String> expand(List<String> targets) {
-        Set<String> out = new HashSet<>();
-        for (String t : targets) {
-            String l = t.toLowerCase(Locale.ROOT).trim();
-            out.add(l);
-            if (l.equals("bengaluru")) out.add("bangalore");
-            if (l.equals("bangalore")) out.add("bengaluru");
-            if (INDIAN_CITIES.contains(l)) out.add("india");
-        }
-        return out;
-    }
-
-    /** Returns the reasons a job is ineligible; an empty list means eligible. */
-    public static List<String> reasons(JobPosting j, Preferences p) {
+    /** Returns the reasons a job is ineligible, each starting with a [category] tag; an empty list means eligible. */
+    public static List<String> reasons(JobPosting j, Preferences p, Candidate c) {
         List<String> r = new ArrayList<>();
         if (!p.targetTitles().isEmpty() && !JobNormalizer.titleMatches(j.title(), p.targetTitles())) {
-            r.add("Title does not match any target title");
+            r.add("[title] Title does not match any target title");
+        }
+        r.addAll(OffProfile.reasons(j.title(), c, p.targetTitles()));
+
+        Integer mine = p.yearsExperience() != null ? p.yearsExperience() : c.years();
+        Set<String> excluded = new LinkedHashSet<>(p.excludedLevels());
+        if (mine != null) { // levels that cannot fit your experience are always skipped
+            if (mine < 5) excluded.addAll(List.of("staff", "principal", "lead", "manager", "director", "architect"));
+            if (mine >= 2) excluded.add("intern");
+            if (mine >= 3) excluded.add("junior");
         }
         Set<String> titleWords = JobNormalizer.tokens(j.title());
-        for (String level : p.excludedLevels()) {
+        for (String level : excluded) {
             Set<String> words = LEVELS.get(level);
-            if (words != null && words.stream().anyMatch(titleWords::contains)) r.add("Seniority level '" + level + "' is excluded");
+            if (words != null && words.stream().anyMatch(titleWords::contains)) r.add("[level] Seniority level '" + level + "' is excluded");
         }
-        if (!p.locations().isEmpty()) {
-            String loc = j.location() == null ? "" : j.location().toLowerCase(Locale.ROOT).trim();
-            boolean place = expand(p.locations()).stream().anyMatch(loc::contains);
-            boolean open = loc.isBlank() || OPEN_REMOTE.matcher(loc).find(); // Worldwide, Anywhere, plain "Remote"
-            // A remote job still has to be open to you: worldwide, or restricted to somewhere you listed.
-            boolean ok = place || (j.remote() ? p.remoteOk() && open : loc.isBlank());
-            if (!ok) {
-                r.add((j.remote() ? "Remote role limited to '" : "Location '") + j.location() + "', outside your target locations");
-            }
-        } else if (j.remote() && !p.remoteOk()) {
-            r.add("Remote role but remote is switched off");
-        }
+
+        LocationInfo li = LocationInfo.classify(j, p);
+        if (!li.eligible()) r.add(li.rejection());
+
         // Posting salaries are LPA and only known when the listing states one in INR. Unknown passes.
         if (p.salaryFloor() != null && j.salaryMax() != null && j.salaryMax() < p.salaryFloor()) {
-            r.add("Top of salary range (" + j.salaryMax() + " LPA) is below your floor (" + p.salaryFloor() + " LPA)");
+            r.add("[salary] Top of salary range (" + j.salaryMax() + " LPA) is below your floor (" + p.salaryFloor() + " LPA)");
+        }
+
+        Integer req = SkillExtractor.requiredYears(j.description());
+        if (mine != null && req != null && Math.abs(req - mine) > EXPERIENCE_BAND) {
+            r.add("[years] Asks for " + req + "+ years; you have about " + mine + " (accepted: " + (mine - EXPERIENCE_BAND) + " to " + (mine + EXPERIENCE_BAND) + ")");
+        }
+
+        if (!c.skills().isEmpty()) {
+            Set<String> required = SkillExtractor.extract(j.title() + "\n" + j.description());
+            long matched = required.stream().filter(c.skills()::contains).count();
+            int n = required.size();
+            if ((n >= 3 && matched < Math.ceil(0.4 * n)) || (n >= 1 && n <= 2 && matched == 0)) {
+                r.add("[skills] Only " + matched + " of " + n + " required skills are on your resume");
+            }
         }
         return r;
     }

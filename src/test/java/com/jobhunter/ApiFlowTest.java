@@ -114,7 +114,7 @@ class ApiFlowTest {
 
         // ranked output: hard filters applied, scores descending, fixtures labelled
         JsonNode jobs = json(mvc.perform(get("/api/v1/jobs").header(KEY, apiKey)).andReturn().getResponse().getContentAsString());
-        assertEquals(3, jobs.size(), "fixtures 1, 2 and 6 pass; fixture 5 is a Staff role");
+        assertEquals(2, jobs.size(), "fixtures 1 and 2 pass; 5 is Staff, 3 and 6 are outside the experience band, 7 is under the salary floor");
         assertTrue(jobs.get(0).get("match").get("score").asInt() >= jobs.get(1).get("match").get("score").asInt());
         assertTrue(jobs.get(0).get("fixture").asBoolean());
         assertTrue(jobs.get(0).get("url").asText().contains("example.invalid"));
@@ -122,7 +122,7 @@ class ApiFlowTest {
 
         // threshold change needs no re-scoring
         int rowsBefore = jdbc.sql("SELECT COUNT(*) FROM job_match").query(Integer.class).single();
-        assertEquals(1, json(mvc.perform(get("/api/v1/jobs?minScore=85").header(KEY, apiKey)).andReturn().getResponse().getContentAsString()).size());
+        assertEquals(1, json(mvc.perform(get("/api/v1/jobs?minScore=80").header(KEY, apiKey)).andReturn().getResponse().getContentAsString()).size());
 
         // a second run reuses cached scores
         mvc.perform(post("/api/v1/search-runs").header(KEY, apiKey)).andExpect(status().isAccepted());

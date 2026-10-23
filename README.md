@@ -68,7 +68,19 @@ Wellfound, LinkedIn, Naukri, Y Combinator's Work at a Startup (login required), 
 
 Salary: `salaryFloor` is in LPA (lakh INR per year). It is only applied to postings that state a salary in LPA or lakhs; postings with no salary or another currency are kept and not filtered.
 
+## How jobs are judged
+
+Hard filters (a job failing any is never shown): title match; off-profile roles (UI, test/QA, embedded, mobile, research, sales/support); seniority levels you excluded, plus staff/principal/lead/manager/director/architect automatically when you have under 5 years; location; salary floor; required experience within 1 year of yours; and at least 40% of the skills a posting names being on your resume.
+
+Location: home is India when a target location is an Indian city. Your city and worldwide-remote roles pass; other Indian cities pass and are marked as needing relocation (switch off with "Show other Indian cities"); anything based abroad, including remote roles limited to another country, passes only when the posting explicitly offers visa sponsorship or relocation support, and ranks higher.
+
+Score (0-100): skills 55, title 15, experience 20 (steep penalty when a job asks for more than you have), plus up to 10 for being in your city (5) or offering a visa abroad (10).
+
 ## Known limitations
+
+- Visa detection reads explicit wording only ("visa sponsorship", "relocation assistance", a VISA tag on Hacker News posts). A posting that says nothing counts as no visa. Wording it does not recognize is missed.
+- The experience figure is the largest "N years ... experience" number in the posting, so an unusual phrasing can be misread. Jobs with no stated figure are not filtered on experience.
+- Arbeitnow (a German-language board) is off by default; set `JOBHUNTER_ARBEITNOW=true` to turn it on.
 
 - Repost/ghost warnings are heuristics: listing age over 45 days, and (Hacker News only) the same company and role appearing in the previous two monthly threads. They cannot prove a listing is fake.
 - Skill matching is a fixed dictionary (about 60 skills), not semantic. Unlisted skills are invisible to scoring.

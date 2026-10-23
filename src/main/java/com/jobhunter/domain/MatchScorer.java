@@ -3,12 +3,12 @@ package com.jobhunter.domain;
 import java.util.*;
 
 /**
- * Explainable 0-100 score: skills overlap (60) + title fit (20) + experience fit (20).
+ * Explainable 0-100 score: skills overlap (55) + title fit (15) + experience fit (20) + up to 10 for location (same city 5, visa-sponsored abroad 10).
  * Pure and deterministic, so results can be cached against (resume version, preferences, SCORING_VERSION).
  */
 public final class MatchScorer {
     /** Part of the cache key for stored results. Bump it whenever EligibilityFilter or scoring logic changes, or old results stay cached. */
-    public static final String SCORING_VERSION = "v3";
+    public static final String SCORING_VERSION = "v4";
 
     private MatchScorer() {}
 
@@ -23,18 +23,18 @@ public final class MatchScorer {
 
         int skillPts;
         if (required.isEmpty()) {
-            skillPts = 30;
+            skillPts = 27;
             uncertainty.add("No recognizable skills in the description, so skills were scored neutrally");
         } else {
-            skillPts = (int) Math.round(60.0 * matched.size() / required.size());
+            skillPts = (int) Math.round(55.0 * matched.size() / required.size());
         }
 
         int titlePts;
         if (prefs.targetTitles().isEmpty()) {
-            titlePts = 10;
+            titlePts = 8;
             uncertainty.add("No target titles set, so title fit was scored neutrally");
         } else {
-            titlePts = JobNormalizer.titleMatches(job.title(), prefs.targetTitles()) ? 20 : 0;
+            titlePts = JobNormalizer.titleMatches(job.title(), prefs.targetTitles()) ? 15 : 0;
         }
 
         Integer req = SkillExtractor.requiredYears(job.description());
@@ -60,7 +60,10 @@ public final class MatchScorer {
         for (String s : matched.stream().limit(5).toList()) {
             SkillExtractor.snippet(job.description(), s).ifPresent(sn -> evidence.add(s + ": \"" + sn + "\""));
         }
-        int total = Math.max(0, Math.min(100, skillPts + titlePts + expPts - penalty));
-        return new MatchResult(total, matched, missing, evidence, uncertainty);
+        // Jobs in your own city and abroad jobs that sponsor a visa get a boost.
+        LocationInfo where = LocationInfo.classify(job, prefs);
+        int bonus = where.mode().equals("abroad_visa") ? 10 : where.mode().equals("same_city") ? 5 : 0;
+        int total = Math.max(0, Math.min(100, skillPts + titlePts + expPts - penalty + bonus));
+        return new MatchResult(total, matched, missing, evidence, uncertainty, where.mode(), where.label(), where.relocation(), where.visa().name());
     }
 }

@@ -69,11 +69,7 @@ public class SearchRunService {
                 .param("v", com.jobhunter.domain.MatchScorer.SCORING_VERSION).query(Integer.class).single();
         eligible[0] = count.apply("eligible=TRUE");
         Map<String, String> patterns = new LinkedHashMap<>();
-        patterns.put("title", "Title does not match");
-        patterns.put("location", "outside your target locations");
-        patterns.put("remote", "remote is switched off");
-        patterns.put("salary", "below your floor");
-        patterns.put("level", "Seniority level");
+        for (String tag : List.of("title", "role", "level", "location", "remote", "visa", "years", "skills", "salary")) patterns.put(tag, "[" + tag + "]");
         patterns.forEach((k, pat) -> {
             int n = count.apply("eligible=FALSE AND rejection_reasons LIKE '%" + pat + "%'");
             if (n > 0) filtered.put(k, n);

@@ -17,7 +17,8 @@ import java.util.UUID;
 @Service
 public class JobQueryService {
     public record MatchView(boolean eligible, int score, List<String> matchedSkills, List<String> missingRequirements,
-                            List<String> evidence, List<String> uncertainty, List<String> rejectionReasons, int resumeVersion) {}
+                            List<String> evidence, List<String> uncertainty, List<String> rejectionReasons, int resumeVersion,
+                            String workMode, String workLabel, boolean relocation, String visa) {}
 
     public record JobView(UUID id, String source, boolean fixture, String title, String company, String location, boolean remote,
                           Integer salaryMin, Integer salaryMax, String url, OffsetDateTime retrievedAt, OffsetDateTime postedAt, int repostCount,
@@ -25,7 +26,7 @@ public class JobQueryService {
 
     private static final String COLS = "SELECT j.id,j.source,j.title,j.location,j.remote,j.salary_min,j.salary_max,j.source_url,j.retrieved_at,j.posted_at,j.repost_count,j.description,"
             + "c.name AS company_name,m.eligible AS m_eligible,m.score AS m_score,m.matched_skills,m.missing_requirements,m.evidence,"
-            + "m.uncertainty,m.rejection_reasons,m.resume_version ";
+            + "m.uncertainty,m.rejection_reasons,m.resume_version,m.work_mode,m.work_label,m.relocation,m.visa ";
 
     private final JdbcClient jdbc;
     private final Json json;
@@ -68,7 +69,8 @@ public class JobQueryService {
         if (!rs.wasNull()) {
             match = new MatchView(rs.getBoolean("m_eligible"), rs.getInt("m_score"), json.list(rs.getString("matched_skills")),
                     json.list(rs.getString("missing_requirements")), json.list(rs.getString("evidence")),
-                    json.list(rs.getString("uncertainty")), json.list(rs.getString("rejection_reasons")), rs.getInt("resume_version"));
+                    json.list(rs.getString("uncertainty")), json.list(rs.getString("rejection_reasons")), rs.getInt("resume_version"),
+                    rs.getString("work_mode"), rs.getString("work_label"), rs.getBoolean("relocation"), rs.getString("visa"));
         }
         String source = rs.getString("source");
         OffsetDateTime posted = rs.getObject("posted_at", OffsetDateTime.class);
