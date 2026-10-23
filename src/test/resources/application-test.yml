@@ -10,3 +10,7 @@ jobhunter:
     fixtures-enabled: true
     remotive-enabled: false
     arbeitnow-enabled: false
+    hackernews-enabled: false
+    remoteok-enabled: false
+    jobicy-enabled: false
+    ycjobs-enabled: false

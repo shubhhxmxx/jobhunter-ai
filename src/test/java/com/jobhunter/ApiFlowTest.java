@@ -57,11 +57,29 @@ class ApiFlowTest {
     void endToEndFlow() throws Exception {
         // setup + auth
         String apiKey = json(mvc.perform(post("/api/v1/setup").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\":\"Test User\",\"email\":\"t@example.com\"}")).andExpect(status().isCreated())
+                .content("{\"name\":\"Test User\",\"email\":\"t@example.com\",\"passcode\":\"correct horse\"}")).andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString()).get("apiKey").asText();
         mvc.perform(get("/api/v1/jobs")).andExpect(status().isUnauthorized());
         mvc.perform(post("/api/v1/setup").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\":\"X\",\"email\":\"not-an-email\"}")).andExpect(status().isBadRequest());
+                .content("{\"name\":\"X\",\"email\":\"not-an-email\",\"passcode\":\"abcdef\"}")).andExpect(status().isBadRequest());
+        mvc.perform(post("/api/v1/setup").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"X\",\"email\":\"x@example.com\",\"passcode\":\"123\"}")).andExpect(status().isBadRequest());
+
+        // sign in with email + passcode: wrong passcode and unknown email give the same answer; the right one gives a working key
+        String bad = mvc.perform(post("/api/v1/login").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"t@example.com\",\"passcode\":\"wrong horse\"}")).andExpect(status().isUnauthorized()).andReturn().getResponse().getContentAsString();
+        String unknown = mvc.perform(post("/api/v1/login").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"nobody@example.com\",\"passcode\":\"wrong horse\"}")).andExpect(status().isUnauthorized()).andReturn().getResponse().getContentAsString();
+        assertEquals(bad, unknown);
+        String signedInKey = json(mvc.perform(post("/api/v1/login").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"T@Example.com\",\"passcode\":\"correct horse\"}")).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString()).get("apiKey").asText();
+        assertFalse(signedInKey.equals(apiKey));
+        assertTrue(json(mvc.perform(get("/api/v1/account").header(KEY, signedInKey)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString()).get("hasPasscode").asBoolean());
+        assertEquals("no-store", mvc.perform(get("/api/v1/account").header(KEY, apiKey)).andReturn().getResponse().getHeader("Cache-Control"));
+        assertEquals("nosniff", mvc.perform(get("/api/v1/account").header(KEY, apiKey)).andReturn().getResponse().getHeader("X-Content-Type-Options"));
+        mvc.perform(put("/api/v1/account/passcode").header(KEY, signedInKey).contentType(MediaType.APPLICATION_JSON).content("{\"passcode\":\"short\"}")).andExpect(status().isBadRequest());
+        assertFalse(jdbc.sql("SELECT passcode_hash FROM candidate_profile").query(String.class).single().contains("correct horse"));
 
         // a search needs a resume and target titles first
         mvc.perform(post("/api/v1/search-runs").header(KEY, apiKey)).andExpect(status().isConflict());
@@ -98,6 +116,13 @@ class ApiFlowTest {
         assertFalse(mvc.perform(get("/api/v1/settings/llm").header(KEY, apiKey)).andReturn().getResponse().getContentAsString().contains(SECRET));
         String stored = jdbc.sql("SELECT encrypted_key FROM provider_credentials").query(String.class).single();
         assertFalse(stored.contains(SECRET));
+        // and it appears in no other API response, including error responses
+        for (String path : new String[]{"/api/v1/account", "/api/v1/preferences", "/api/v1/resumes", "/api/v1/jobs", "/api/v1/settings/llm"}) {
+            assertFalse(mvc.perform(get(path).header(KEY, apiKey)).andReturn().getResponse().getContentAsString().contains(SECRET), path);
+        }
+        String bad400 = mvc.perform(put("/api/v1/settings/llm").header(KEY, apiKey).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"provider\":\"nope\",\"model\":\"m\",\"apiKey\":\"" + SECRET + "\"}")).andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
+        assertFalse(bad400.contains(SECRET));
 
         // async search run: 202 + status endpoint
         var started = mvc.perform(post("/api/v1/search-runs").header(KEY, apiKey)).andExpect(status().isAccepted()).andReturn().getResponse();

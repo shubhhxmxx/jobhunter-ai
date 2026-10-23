@@ -54,6 +54,39 @@ public class CryptoService {
         }
     }
 
+    private static final int PBKDF2_ITERATIONS = 120_000;
+    private static final String DUMMY_HASH = hashPasscode("not-a-real-passcode");
+
+    /** Salted PBKDF2 hash in the form pbkdf2$iterations$salt$hash. */
+    public static String hashPasscode(String passcode) {
+        try {
+            byte[] salt = new byte[16];
+            new SecureRandom().nextBytes(salt);
+            return "pbkdf2$" + PBKDF2_ITERATIONS + "$" + Base64.getEncoder().encodeToString(salt) + "$"
+                    + Base64.getEncoder().encodeToString(pbkdf2(passcode, salt, PBKDF2_ITERATIONS));
+        } catch (Exception e) {
+            throw new IllegalStateException("Hashing failed");
+        }
+    }
+
+    /** Constant-time check. A missing hash is compared against a dummy so unknown accounts cost the same time as known ones. */
+    public static boolean verifyPasscode(String passcode, String stored) {
+        try {
+            boolean known = stored != null && stored.startsWith("pbkdf2$");
+            String[] parts = (known ? stored : DUMMY_HASH).split("\\$");
+            byte[] expected = Base64.getDecoder().decode(parts[3]);
+            byte[] actual = pbkdf2(passcode, Base64.getDecoder().decode(parts[2]), Integer.parseInt(parts[1]));
+            return MessageDigest.isEqual(expected, actual) && known;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static byte[] pbkdf2(String passcode, byte[] salt, int iterations) throws Exception {
+        var spec = new javax.crypto.spec.PBEKeySpec(passcode.toCharArray(), salt, iterations, 256);
+        return javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).getEncoded();
+    }
+
     public static String sha256Hex(String s) {
         try {
             return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(s.getBytes(StandardCharsets.UTF_8)));

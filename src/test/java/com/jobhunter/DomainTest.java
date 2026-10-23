@@ -1,7 +1,10 @@
 package com.jobhunter;
 
 import com.jobhunter.domain.*;
+import com.jobhunter.security.CryptoService;
+import com.jobhunter.security.Redactor;
 import com.jobhunter.source.HnPostParser;
+import com.jobhunter.source.YcJobParser;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -29,7 +32,7 @@ class DomainTest {
 
     private static Preferences prefs() {
         return new Preferences(List.of("Backend Engineer", "Java Developer"), List.of("Bengaluru"), true,
-                10, null, List.of(), true, true, 60);
+                10, null, List.of(), true, true, false, 60);
     }
 
     private static JobPosting job(String title, String loc, boolean remote, Integer salaryMax, String desc) {
@@ -163,7 +166,7 @@ class DomainTest {
     }
 
     @Test void skipsExcludedSeniorityLevels() {
-        Preferences p = new Preferences(List.of("Backend Engineer"), List.of("Bengaluru"), true, null, null, List.of("staff", "principal"), true, true, 60);
+        Preferences p = new Preferences(List.of("Backend Engineer"), List.of("Bengaluru"), true, null, null, List.of("staff", "principal"), true, true, false, 60);
         assertFalse(reasons(job("Staff Backend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
         assertFalse(reasons(job("Principal Backend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
         assertTrue(reasons(job("Senior Backend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
@@ -172,7 +175,7 @@ class DomainTest {
 
     @Test void jobsAskingFarMoreYearsRankClearlyLower() {
         ParsedResume r = ResumeParser.parse(RESUME); // about 4 years
-        Preferences p = new Preferences(List.of("Backend Engineer"), List.of("Bengaluru"), true, null, 3, List.of(), true, true, 60);
+        Preferences p = new Preferences(List.of("Backend Engineer"), List.of("Bengaluru"), true, null, 3, List.of(), true, true, false, 60);
         String skills = "Java Spring Kafka Redis. ";
         MatchResult fits = MatchScorer.score(job("Backend Engineer", "Bengaluru", false, null, skills + "2+ years"), r, p);
         MatchResult stretch = MatchScorer.score(job("Backend Engineer", "Bengaluru", false, null, skills + "4+ years"), r, p);
@@ -200,7 +203,7 @@ class DomainTest {
 
     private static Preferences india(boolean otherCities, boolean abroad) {
         return new Preferences(List.of("Backend Engineer", "Software Engineer"), List.of("Bengaluru"), true, null, null,
-                List.of(), otherCities, abroad, 60);
+                List.of(), otherCities, abroad, false, 60);
     }
 
     @Test void otherIndianCitiesAreFlaggedAsRelocation() {
@@ -266,7 +269,7 @@ class DomainTest {
             assertFalse(reasons(job(t, "Bengaluru", false, null, ""), p).isEmpty(), t);
         assertTrue(reasons(job("Software Engineer, Backend", "Bengaluru", false, null, ""), p).isEmpty());
         // allowed when you asked for it
-        Preferences wantsUi = new Preferences(List.of("UI Engineer"), List.of("Bengaluru"), true, null, null, List.of(), true, true, 60);
+        Preferences wantsUi = new Preferences(List.of("UI Engineer"), List.of("Bengaluru"), true, null, null, List.of(), true, true, false, 60);
         assertTrue(reasons(job("UI Engineer", "Bengaluru", false, null, ""), wantsUi).isEmpty());
     }
 
@@ -283,5 +286,61 @@ class DomainTest {
         assertFalse(reasons(job("Lead Backend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
         assertFalse(reasons(job("Junior Backend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
         assertTrue(reasons(job("Senior Backend Engineer", "Bengaluru", false, null, ""), p).isEmpty());
+    }
+
+    @Test void abroadWithoutVisaMentionIsFlaggedAndRankedLower() {
+        Preferences any = new Preferences(List.of("Backend Engineer"), List.of("Bengaluru"), true, null, null, List.of(), true, false, true, 60);
+        JobPosting berlin = job("Backend Engineer", "Berlin, Germany", false, null, "Java Spring Kafka Redis. 4+ years of experience.");
+        assertTrue(reasons(berlin, any).isEmpty());
+        assertEquals("abroad_no_visa", LocationInfo.classify(berlin, any).mode());
+        assertTrue(LocationInfo.classify(berlin, any).label().contains("own work permit"));
+        assertFalse(reasons(berlin, india(true, true)).isEmpty()); // default: hidden
+        assertFalse(reasons(job("Backend Engineer", "Berlin, Germany", false, null, "We cannot sponsor visas."), any).isEmpty()); // an explicit no stays out
+        ParsedResume r = ResumeParser.parse(RESUME);
+        JobPosting home = job("Backend Engineer", "Bengaluru", false, null, "Java Spring Kafka Redis. 4+ years of experience.");
+        assertTrue(MatchScorer.score(home, r, any).score() > MatchScorer.score(berlin, r, any).score() + 10);
+    }
+
+    @Test void scoresAreRealisticForStrongMatches() {
+        ParsedResume r = ResumeParser.parse(RESUME);
+        // 4 of 7 listed skills: long skill lists are capped at 6, so this is a strong match, not a middling one
+        JobPosting j = job("Backend Engineer", "Bengaluru", false, null, "Java Spring Kafka Redis Docker AWS Terraform. 4+ years of experience.");
+        int score = MatchScorer.score(j, r, india(true, true)).score();
+        assertTrue(score >= 80, "score " + score);
+    }
+
+    @Test void parsesYcJobPosts() {
+        JobPosting p = YcJobParser.parse("Resend (YC W23) Is Hiring a Senior Backend Engineer", "https://resend.com/careers", "7", Instant.parse("2026-10-01T00:00:00Z"));
+        assertEquals("Resend", p.company());
+        assertEquals("Senior Backend Engineer", p.title());
+        assertEquals("https://resend.com/careers", p.url());
+        assertEquals("ycjobs", p.source());
+        JobPosting boston = YcJobParser.parse("Dotmatics (YC S11) is hiring Software Engineers in Boston", null, "8", null);
+        assertEquals("Boston", boston.location());
+        assertEquals("Software Engineers", boston.title());
+        assertEquals("https://news.ycombinator.com/item?id=8", boston.url());
+        JobPosting remote = YcJobParser.parse("Acme (YC S20) is hiring Backend Engineer (Remote)", "javascript:alert(1)", "9", null);
+        assertTrue(remote.remote());
+        assertEquals("Backend Engineer", remote.title());
+        assertTrue(remote.url().startsWith("https://news.ycombinator.com/"));
+        assertEquals(null, YcJobParser.parse("Show HN: my project", null, "10", null));
+        assertEquals(null, YcJobParser.parse("Acme is hiring", null, "11", null));
+    }
+
+    @Test void redactsSecretsFromText() {
+        String text = "failed for " + "sk-" + "ant-api03-ABCDEFGHIJKLMNOP" + " and " + "gh" + "p_" + "FAKE0123456789abcdefghijklmnopqrstuv" + " with app_key=abc123 passcode: hunter22 Bearer xyz.123";
+        String out = Redactor.redact(text);
+        for (String secret : List.of("ABCDEFGHIJKLMNOP", "FAKE0123456789", "abc123", "hunter22", "xyz.123")) assertFalse(out.contains(secret), secret);
+        assertTrue(out.contains("failed for"));
+        assertEquals("fine message", Redactor.redact("fine message"));
+    }
+
+    @Test void passcodesAreHashedAndVerified() {
+        String h = CryptoService.hashPasscode("correct horse");
+        assertFalse(h.contains("correct horse"));
+        assertTrue(CryptoService.verifyPasscode("correct horse", h));
+        assertFalse(CryptoService.verifyPasscode("wrong horse", h));
+        assertFalse(CryptoService.verifyPasscode("anything", null));
+        assertFalse(CryptoService.hashPasscode("correct horse").equals(h)); // salted
     }
 }

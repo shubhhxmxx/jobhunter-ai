@@ -94,6 +94,7 @@ public class SearchRunWorker {
 
     private static String safe(Exception e) {
         String m = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+        m = com.jobhunter.security.Redactor.redact(m);
         return m.length() > 300 ? m.substring(0, 300) : m;
     }
 

@@ -8,6 +8,7 @@ spring:
     max-file-size: 5MB
     max-request-size: 6MB
   jackson.default-property-inclusion: non_null
+  mvc.log-request-details: false
 server:
   error.include-message: never
   error.include-stacktrace: never
@@ -17,6 +18,7 @@ jobhunter:
     fixtures-enabled: ${JOBHUNTER_FIXTURES:true}
     remotive-enabled: ${JOBHUNTER_REMOTIVE:true}
     hackernews-enabled: ${JOBHUNTER_HN:true}
+    ycjobs-enabled: ${JOBHUNTER_YCJOBS:true}
     remoteok-enabled: ${JOBHUNTER_REMOTEOK:true}
     jobicy-enabled: ${JOBHUNTER_JOBICY:true}
     adzuna-app-id: ${JOBHUNTER_ADZUNA_APP_ID:}

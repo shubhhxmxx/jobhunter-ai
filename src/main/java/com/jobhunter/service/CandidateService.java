@@ -27,16 +27,16 @@ public class CandidateService {
 
     /** Creates the profile with default preferences. The raw API key is returned once and only its hash is stored. */
     @Transactional
-    public Created setup(String name, String email) {
+    public Created setup(String name, String email, String passcode) {
         byte[] raw = new byte[32];
         random.nextBytes(raw);
         String key = "jh_" + Base64.getUrlEncoder().withoutPadding().encodeToString(raw);
         UUID id = UUID.randomUUID();
         OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
         try {
-            jdbc.sql("INSERT INTO candidate_profile(id,name,email,api_key_hash,created_at) VALUES(:id,:n,:e,:h,:t)")
+            jdbc.sql("INSERT INTO candidate_profile(id,name,email,api_key_hash,passcode_hash,created_at) VALUES(:id,:n,:e,:h,:p,:t)")
                     .param("id", id).param("n", name.trim()).param("e", email.trim().toLowerCase())
-                    .param("h", CryptoService.sha256Hex(key)).param("t", now).update();
+                    .param("h", CryptoService.sha256Hex(key)).param("p", CryptoService.hashPasscode(passcode)).param("t", now).update();
         } catch (DuplicateKeyException e) {
             throw new ApiException(HttpStatus.CONFLICT, "EMAIL_EXISTS", "A profile with this email already exists");
         }

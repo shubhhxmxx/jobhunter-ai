@@ -60,6 +60,7 @@ Job sources (all UNVERIFIED against live APIs in tests; the first deploy returne
 - `remotive` and `arbeitnow`: public job-board APIs. Remotive asks for sparing use and attribution; at most 3 requests per run.
 - `remoteok` and `jobicy`: public remote-job feeds; both require crediting and linking back to the listing, which the UI does.
 - `adzuna`: aggregates many Indian job boards. Needs a free App ID and key (developer.adzuna.com) in `JOBHUNTER_ADZUNA_APP_ID` and `JOBHUNTER_ADZUNA_APP_KEY`; without them it is not loaded. Descriptions are short snippets.
+- `ycjobs`: job posts Y Combinator publishes on Hacker News, read through the HN Algolia API (one request). Posts carry only a title and a link, so skills cannot be matched, and a post that does not state where the job is fails the location rules. YC's own Work at a Startup board needs a login and has no public API, so it is not used.
 - `hackernews`: the monthly "Ask HN: Who is hiring?" thread via the free HN Algolia API (about 3 requests per run). Posts follow a "Company | Role | Location" convention that the parser relies on; posts that don't are skipped. Only posts whose role matches your target titles are kept.
 - `fixture`: demo data from `src/main/resources/fixtures/jobs.json`. Every URL is under `example.invalid`, badged "Fixture" in the UI. Disable with `JOBHUNTER_FIXTURES=false`.
 
@@ -68,13 +69,19 @@ Wellfound, LinkedIn, Naukri, Y Combinator's Work at a Startup (login required), 
 
 Salary: `salaryFloor` is in LPA (lakh INR per year). It is only applied to postings that state a salary in LPA or lakhs; postings with no salary or another currency are kept and not filtered.
 
+## Signing in and secrets
+
+- Sign in with email and a passcode (at least 6 characters, stored as a salted PBKDF2 hash). Each sign-in creates a separate access key for that device; only SHA-256 hashes of keys are stored. Failed sign-ins are throttled (8 per email and 30 per address per 15 minutes, in memory). Email-only sign-in is deliberately not offered: on a public URL it would let anyone who knows your email read your resume.
+- An AI provider key (optional; no feature uses it yet) is encrypted with AES-256-GCM using `JOBHUNTER_ENCRYPTION_KEY`, never returned by any endpoint (only its last 4 characters), masked in `toString`, and scrubbed from logs and stored error text by `Redactor`. **Set `JOBHUNTER_ENCRYPTION_KEY` to your own random value** (`openssl rand -base64 32`); the example value in this chat's earlier instructions was public and must not protect a real key.
+- Responses under `/api/` are sent with `Cache-Control: no-store`; the web page is served with a Content-Security-Policy that only allows its own origin.
+
 ## How jobs are judged
 
 Hard filters (a job failing any is never shown): title match; off-profile roles (UI, test/QA, embedded, mobile, research, sales/support); seniority levels you excluded, plus staff/principal/lead/manager/director/architect automatically when you have under 5 years; location; salary floor; required experience within 1 year of yours; and at least 40% of the skills a posting names being on your resume.
 
 Location: home is India when a target location is an Indian city. Your city and worldwide-remote roles pass; other Indian cities pass and are marked as needing relocation (switch off with "Show other Indian cities"); anything based abroad, including remote roles limited to another country, passes only when the posting explicitly offers visa sponsorship or relocation support, and ranks higher.
 
-Score (0-100): skills 55, title 15, experience 20 (steep penalty when a job asks for more than you have), plus up to 10 for being in your city (5) or offering a visa abroad (10).
+Score (0-100) ranks jobs that already passed the filters: base 10, skills up to 45 (full marks at 6 matched skills), title 15, experience up to 20 (steep penalty when a job asks for more than you have), plus 5 for your own city, 10 for visa-sponsored abroad, minus 10 for abroad with no visa mention.
 
 ## Known limitations
 

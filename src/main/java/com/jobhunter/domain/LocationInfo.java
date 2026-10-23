@@ -8,8 +8,9 @@ import java.util.regex.Pattern;
 /**
  * Where the job is relative to the candidate, and whether it is acceptable.
  * Home is India when any target location is an Indian city: same city, other Indian cities (flagged as relocation) and
- * worldwide-remote roles are acceptable; anything based abroad needs explicit visa sponsorship in the posting.
- * mode is one of: same_city, india_other_city, remote_india, remote_worldwide, abroad_visa, unspecified, rejected.
+ * worldwide-remote roles are acceptable; anything based abroad needs explicit visa sponsorship in the posting
+ * (or the candidate's opt-in to see abroad jobs that do not mention a visa).
+ * mode is one of: same_city, india_other_city, remote_india, remote_worldwide, abroad_visa, abroad_no_visa, unspecified, rejected.
  */
 public record LocationInfo(String mode, String label, boolean relocation, Visa visa, boolean eligible, String rejection) {
     static final Set<String> INDIA_PLACES = Set.of("india", "bengaluru", "bangalore", "mumbai", "delhi", "gurgaon", "gurugram",
@@ -66,10 +67,13 @@ public record LocationInfo(String mode, String label, boolean relocation, Visa v
             }
             if (loc.isBlank()) return no(visa, "[location] Location not listed");
         }
-        // Based abroad (on-site, or remote but restricted to residents of that place): needs explicit visa sponsorship.
-        if (visa == Visa.YES && p.openToAbroad()) {
-            String where = j.remote() ? "Remote, but you must live in " + raw : "On-site in " + raw;
+        // Based abroad (on-site, or remote but restricted to residents of that place).
+        String where = j.remote() ? "Remote, but you must live in " + raw : "On-site in " + raw;
+        if (visa == Visa.YES && (p.openToAbroad() || p.abroadWithoutVisa())) {
             return new LocationInfo("abroad_visa", where + ". Visa sponsorship or relocation support is offered", true, visa, true, null);
+        }
+        if (visa == Visa.UNKNOWN && p.abroadWithoutVisa()) {
+            return new LocationInfo("abroad_no_visa", where + ". No visa sponsorship is mentioned, so you would need your own work permit", true, visa, true, null);
         }
         return no(visa, "[visa] Based in '" + raw + "' and " + (visa == Visa.NO ? "says it will not sponsor a visa" : "no visa sponsorship is stated"));
     }

@@ -3,12 +3,14 @@ package com.jobhunter.domain;
 import java.util.*;
 
 /**
- * Explainable 0-100 score: skills overlap (55) + title fit (15) + experience fit (20) + up to 10 for location (same city 5, visa-sponsored abroad 10).
+ * Explainable 0-100 ranking score. Every job scored has already passed the hard filters, so it starts at 10. Then skills 45 (full marks at 6 matched skills,
+ * so long skill lists are not punished), title 15, experience 20, and location +5 same city, +10 visa-sponsored abroad, -10 abroad with no visa mention.
  * Pure and deterministic, so results can be cached against (resume version, preferences, SCORING_VERSION).
  */
 public final class MatchScorer {
     /** Part of the cache key for stored results. Bump it whenever EligibilityFilter or scoring logic changes, or old results stay cached. */
-    public static final String SCORING_VERSION = "v4";
+    public static final String SCORING_VERSION = "v5";
+    private static final int PASSED_FILTERS = 10;
 
     private MatchScorer() {}
 
@@ -23,10 +25,10 @@ public final class MatchScorer {
 
         int skillPts;
         if (required.isEmpty()) {
-            skillPts = 27;
+            skillPts = 22;
             uncertainty.add("No recognizable skills in the description, so skills were scored neutrally");
         } else {
-            skillPts = (int) Math.round(55.0 * matched.size() / required.size());
+            skillPts = (int) Math.round(45.0 * Math.min(1.0, matched.size() / (double) Math.min(required.size(), 6)));
         }
 
         int titlePts;
@@ -62,8 +64,8 @@ public final class MatchScorer {
         }
         // Jobs in your own city and abroad jobs that sponsor a visa get a boost.
         LocationInfo where = LocationInfo.classify(job, prefs);
-        int bonus = where.mode().equals("abroad_visa") ? 10 : where.mode().equals("same_city") ? 5 : 0;
-        int total = Math.max(0, Math.min(100, skillPts + titlePts + expPts - penalty + bonus));
+        int bonus = switch (where.mode()) { case "abroad_visa" -> 10; case "same_city" -> 5; case "abroad_no_visa" -> -10; default -> 0; };
+        int total = Math.max(0, Math.min(100, PASSED_FILTERS + skillPts + titlePts + expPts - penalty + bonus));
         return new MatchResult(total, matched, missing, evidence, uncertainty, where.mode(), where.label(), where.relocation(), where.visa().name());
     }
 }

@@ -21,7 +21,8 @@ public class SettingsController {
             @Min(0) @Max(50) Integer yearsExperience,
             @Size(max = 10) List<@NotBlank String> excludedLevels,
             Boolean openToIndia,
-            Boolean openToAbroad) {}
+            Boolean openToAbroad,
+            Boolean abroadWithoutVisa) {}
 
     public record MatchingRequest(@NotNull @Min(0) @Max(100) Integer minMatchScore) {}
 
@@ -57,7 +58,7 @@ public class SettingsController {
         prefs.update(id, r.targetTitles().stream().map(String::trim).toList(),
                 r.locations() == null ? List.of() : r.locations().stream().map(String::trim).toList(),
                 r.remoteOk() == null || r.remoteOk(), r.salaryFloor(), r.yearsExperience(), levels,
-                r.openToIndia() == null || r.openToIndia(), r.openToAbroad() == null || r.openToAbroad());
+                r.openToIndia() == null || r.openToIndia(), r.openToAbroad() == null || r.openToAbroad(), r.abroadWithoutVisa() != null && r.abroadWithoutVisa());
         return prefs.get(id);
     }
 

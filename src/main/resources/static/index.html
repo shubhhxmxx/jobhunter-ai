@@ -3,130 +3,146 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>JobHunter AI</title>
+<title>JobHunter</title>
 <script>try{document.documentElement.dataset.theme=localStorage.getItem('jh_theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}catch(e){document.documentElement.dataset.theme='light'}</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Schibsted+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#fff3d9;--dot:rgba(27,19,64,.11);--card:#fff;--field:#fffbf0;--ink:#1b1340;--mute:#5e5784;--line:#1b1340;--soft:rgba(27,19,64,.18);--shadow:#1b1340;
---violet:#6b4cf6;--on-violet:#fff;--coral:#ff5a7a;--sun:#ffc933;--mint:#1fbf8f;--link:#4b2fd1;
---mint-bg:#c9f7e8;--mint-ink:#0b6b50;--coral-bg:#ffd9df;--coral-ink:#a3122f;--sun-bg:#fff0b8;--sun-ink:#6b4b00;color-scheme:light}
-:root[data-theme=dark]{--bg:#120e2b;--dot:rgba(155,132,255,.14);--card:#1d1744;--field:#15103a;--ink:#f3eeff;--mute:#b3a9db;--line:#4a3f8f;--soft:rgba(155,132,255,.25);--shadow:#6b4cf6;
---violet:#9b84ff;--on-violet:#120e2b;--coral:#ff8ca3;--sun:#ffd65c;--mint:#4fe3b5;--link:#b7a6ff;
---mint-bg:#12382f;--mint-ink:#6ff0c6;--coral-bg:#3f1830;--coral-ink:#ff9db0;--sun-bg:#3d3210;--sun-ink:#ffd66b;color-scheme:dark}
+:root{--bg:#f6f6f4;--card:#fff;--field:#fff;--ink:#1f2328;--mute:#5f6872;--line:#d9dbde;--accent:#2b5a87;--on-accent:#fff;
+--pos:#1a7040;--pos-bg:#e7f2ea;--neg:#a8281d;--neg-bg:#fbeceb;--warn:#8a5a00;--warn-bg:#fbf1d9;color-scheme:light}
+:root[data-theme=dark]{--bg:#14171a;--card:#1b1f23;--field:#14171a;--ink:#e6e8ea;--mute:#98a1a9;--line:#2f353b;--accent:#8db6e3;--on-accent:#10161c;
+--pos:#6fcf97;--pos-bg:#1a2b21;--neg:#f0877d;--neg-bg:#331f1d;--warn:#e2b948;--warn-bg:#2d2713;color-scheme:dark}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);background-image:radial-gradient(var(--dot) 1.3px,transparent 1.3px);background-size:22px 22px;color:var(--ink);font:16px/1.5 "Schibsted Grotesk",system-ui,sans-serif;transition:background-color .25s,color .25s}
-h1,h2,h3,.score{font-family:"Bricolage Grotesque","Schibsted Grotesk",system-ui,sans-serif}
-h1,h2,h3{margin:0;line-height:1.15}
-h1{font-size:1.8rem;font-weight:800;letter-spacing:-.03em}
-.logo{display:inline-block;transform:rotate(-10deg)}
-h2{font-size:1.2rem;font-weight:800;margin-bottom:.75rem}
-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem clamp(1rem,3vw,2rem);border-bottom:3px solid var(--line);background:var(--card)}
-header small{color:var(--mute)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif}
+h1,h2,h3,h4{margin:0;line-height:1.25}
+h1{font-size:1.2rem;font-weight:650}
+h2{font-size:1rem;font-weight:650;margin-bottom:.7rem}
+header{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.8rem clamp(1rem,3vw,2rem);border-bottom:1px solid var(--line);background:var(--card)}
+header small{display:block;color:var(--mute);font-size:.85rem}
 .hdr{display:flex;gap:.5rem}
-.hdr button{margin-top:0}
-main{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:1.4rem;padding:1.4rem clamp(1rem,3vw,2rem);max-width:1200px;margin:auto}
+main{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:1.25rem;padding:1.25rem clamp(1rem,3vw,2rem);max-width:1200px;margin:auto}
 @media (max-width:860px){main{grid-template-columns:1fr}}
-section.card{background:var(--card);border:2.5px solid var(--line);border-radius:16px;box-shadow:5px 5px 0 var(--shadow);padding:1rem 1.1rem;margin-bottom:1.4rem}
-label{display:block;font-size:.9rem;font-weight:700;margin:.7rem 0 .25rem}
-input[type=text],input[type=email],input[type=number],input[type=password],textarea,select{width:100%;padding:.55rem .7rem;border:2px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink);font:inherit}
-input[type=range]{accent-color:var(--violet);flex:1;min-width:120px}
-input[type=checkbox]{accent-color:var(--violet)}
-input:focus-visible,button:focus-visible,summary:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:1rem 1.1rem;margin-bottom:1rem}
+label{display:block;font-size:.88rem;font-weight:550;margin:.75rem 0 .25rem}
+label.check{display:flex;gap:.5rem;align-items:flex-start;font-weight:400;margin:.5rem 0}
+label.check input{margin-top:.25rem}
+input[type=text],input[type=email],input[type=number],input[type=password],textarea,select{width:100%;padding:.5rem .65rem;border:1px solid var(--line);border-radius:6px;background:var(--field);color:var(--ink);font:inherit}
+input[type=range]{accent-color:var(--accent);flex:1;min-width:120px}
+input[type=checkbox]{accent-color:var(--accent)}
+input:focus-visible,button:focus-visible,summary:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
-button{font:inherit;font-weight:800;border:2.5px solid var(--line);border-radius:12px;padding:.6rem 1rem;background:var(--violet);color:var(--on-violet);cursor:pointer;margin-top:.9rem;box-shadow:3px 3px 0 var(--shadow);transition:transform .12s,box-shadow .12s}
-button:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--shadow)}
-button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--shadow)}
-button.secondary{background:var(--card);color:var(--ink)}
-button:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:3px 3px 0 var(--shadow)}
-#runBtn{background:var(--coral);color:#1b1340}
+button{font:inherit;font-weight:600;border:1px solid var(--accent);border-radius:6px;padding:.5rem .95rem;background:var(--accent);color:var(--on-accent);cursor:pointer;margin-top:.85rem}
+button.secondary{background:transparent;color:var(--ink);border-color:var(--line)}
+button:hover{filter:brightness(1.07)}
+button:disabled{opacity:.5;cursor:not-allowed}
+.hdr button{margin-top:0;padding:.35rem .7rem;font-size:.88rem}
 .hint{color:var(--mute);font-size:.86rem;margin:.3rem 0 0}
-a{color:var(--link);font-weight:700}
+a{color:var(--accent)}
+.tabs{display:flex;gap:1.1rem;border-bottom:1px solid var(--line);margin:-.2rem 0 .6rem}
+.tabs button{margin:0;padding:.4rem 0;background:none;border:0;border-bottom:2px solid transparent;border-radius:0;color:var(--mute);font-weight:600}
+.tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
 .chips{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.4rem}
-.chip{font-size:.8rem;font-weight:700;padding:.1rem .6rem;border-radius:99px;border:2px solid var(--soft)}
-.chip.ok{background:var(--mint-bg);color:var(--mint-ink);border-color:transparent}
-.chip.miss{background:var(--coral-bg);color:var(--coral-ink);border-color:transparent}
-.chip.fixture,.chip.warn{background:var(--sun-bg);color:var(--sun-ink);border-color:transparent}
-.keybox{background:var(--sun);color:#1b1340;padding:.6rem;border-radius:10px;border:2px solid var(--line);word-break:break-all;font-family:ui-monospace,monospace;font-size:.85rem}
-.job{border-top:2px dashed var(--soft);padding:.9rem 0}
+.chip{font-size:.78rem;padding:.05rem .55rem;border-radius:4px;border:1px solid var(--line);color:var(--mute)}
+.chip.ok{background:var(--pos-bg);color:var(--pos);border-color:transparent}
+.chip.miss{background:var(--neg-bg);color:var(--neg);border-color:transparent}
+.chip.warn{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+.keybox{background:var(--warn-bg);color:var(--ink);padding:.6rem;border-radius:6px;word-break:break-all;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.85rem}
+.job{border-top:1px solid var(--line);padding:.85rem 0}
 .job:first-child{border-top:0}
-.job summary{cursor:pointer;list-style:none;display:grid;grid-template-columns:auto 1fr;gap:.9rem;align-items:center}
+.job summary{cursor:pointer;list-style:none;display:grid;grid-template-columns:3rem 1fr;gap:.9rem;align-items:start}
 .job summary::-webkit-details-marker{display:none}
-.score{--ring:var(--coral);width:3.7rem;height:3.7rem;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:1.2rem;background:conic-gradient(var(--ring) calc(var(--s)*1%),var(--soft) 0);position:relative}
-.score.hi{--ring:var(--mint)}.score.mid{--ring:var(--sun)}.score.lo{--ring:var(--coral)}
-.score span{position:absolute;inset:.3rem;border-radius:50%;background:var(--card);display:grid;place-items:center}
-.job h3{font-size:1.02rem}
+.score{font-variant-numeric:tabular-nums;text-align:left}
+.score b{display:block;font-size:1.5rem;font-weight:650;line-height:1.1}
+.score i{display:block;height:3px;border-radius:2px;background:var(--line);margin-top:.3rem;position:relative}
+.score i::after{content:"";position:absolute;left:0;top:0;bottom:0;width:var(--s);background:currentColor;border-radius:2px}
+.score.hi{color:var(--pos)}.score.mid{color:var(--ink)}.score.lo{color:var(--mute)}
+.job h3{font-size:1rem;font-weight:600}
 .meta{color:var(--mute);font-size:.88rem}
-.detail{padding:.8rem 0 0 4.6rem;font-size:.92rem}
-.detail h4{margin:.8rem 0 .2rem;font-size:.9rem}
-.detail blockquote{margin:.25rem 0;padding-left:.7rem;border-left:4px solid var(--violet);color:var(--mute)}
-.warnline{color:var(--sun-ink);background:var(--sun-bg);border-radius:8px;padding:.2rem .5rem;margin:.2rem 0}
+.detail{padding:.7rem 0 0 3.9rem;font-size:.92rem}
+h4.sub{margin:.7rem 0 .2rem;font-size:.82rem;font-weight:650;text-transform:uppercase;letter-spacing:.04em;color:var(--mute)}
+.detail h4{margin:.85rem 0 .2rem;font-size:.82rem;font-weight:650;text-transform:uppercase;letter-spacing:.04em;color:var(--mute)}
+.detail blockquote{margin:.25rem 0;padding-left:.7rem;border-left:2px solid var(--line);color:var(--mute)}
+.warnline{color:var(--warn)}
 @media (max-width:520px){.detail{padding-left:0}}
-#toast{position:fixed;left:50%;bottom:1rem;transform:translateX(-50%);max-width:90vw;background:var(--coral);color:#1b1340;font-weight:700;border:2.5px solid var(--line);box-shadow:4px 4px 0 var(--shadow);padding:.6rem 1rem;border-radius:12px;display:none;z-index:10}
-.empty{color:var(--mute);padding:1.5rem 0}
+#toast{position:fixed;left:50%;bottom:1rem;transform:translateX(-50%);max-width:90vw;background:var(--ink);color:var(--bg);padding:.55rem .9rem;border-radius:6px;display:none;z-index:10;font-size:.92rem}
+.empty{color:var(--mute);padding:1.2rem 0}
 .bar{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
-.bar output{font-weight:800;min-width:2.2rem}
-@media (prefers-reduced-motion:no-preference){
-@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
-.job{animation:pop .35s ease backwards}
-.job:nth-child(2){animation-delay:.04s}.job:nth-child(3){animation-delay:.08s}.job:nth-child(4){animation-delay:.12s}.job:nth-child(5){animation-delay:.16s}
-.logo{animation:wiggle 4s ease-in-out infinite}
-@keyframes wiggle{0%,90%,100%{transform:rotate(-10deg)}95%{transform:rotate(8deg)}}}
+.bar button{margin-top:0}
+.bar output{font-weight:650;min-width:2.2rem;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
-<header><div><h1>JobHunter AI <span class="logo">🎯</span></h1><small>Find jobs that fit your resume, with the reasoning shown.</small></div>
-<div class="hdr"><button class="secondary" id="theme" aria-label="Switch to night mode" title="Night mode">🌙</button><button class="secondary" id="signout" hidden>Sign out</button></div></header>
+<header>
+  <div><h1>JobHunter</h1><small>Jobs that fit your resume, with the reasoning shown.</small></div>
+  <div class="hdr"><button class="secondary" id="theme" aria-label="Switch to night mode">Night mode</button><button class="secondary" id="signout" hidden>Sign out</button></div>
+</header>
 <main>
 <div>
-  <section class="card" id="setup">
-    <h2>🙋 Create your profile</h2>
-    <label for="name">Name</label><input id="name" type="text" autocomplete="name">
-    <label for="email">Email</label><input id="email" type="email" autocomplete="email">
-    <button id="setupBtn">Create profile</button>
-    <p class="hint">Already have a key? <a href="#" id="haveKey">Paste it here</a>.</p>
+  <section class="card" id="auth">
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tabIn" aria-selected="true">Sign in</button>
+      <button role="tab" id="tabNew" aria-selected="false">Create profile</button>
+    </div>
+    <div id="paneIn">
+      <label for="inEmail">Email</label><input id="inEmail" type="email" autocomplete="username">
+      <label for="inPass">Passcode</label><input id="inPass" type="password" autocomplete="current-password">
+      <button id="signInBtn">Sign in</button>
+    </div>
+    <div id="paneNew" hidden>
+      <label for="name">Name</label><input id="name" type="text" autocomplete="name">
+      <label for="email">Email</label><input id="email" type="email" autocomplete="email">
+      <label for="newPass">Passcode (at least 6 characters)</label><input id="newPass" type="password" autocomplete="new-password">
+      <p class="hint">You will use your email and this passcode to sign in on any device.</p>
+      <button id="setupBtn">Create profile</button>
+    </div>
+    <p class="hint">Have an access key instead? <a href="#" id="haveKey">Paste it</a>.</p>
   </section>
   <section class="card" id="keyCard" hidden>
-    <h2>🔑 Your API key</h2>
+    <h2>Your access key</h2>
     <div class="keybox" id="keyShown"></div>
-    <p class="hint">Shown once. The browser stores it so you stay signed in; the server keeps only a hash.</p>
+    <p class="hint">Shown once. It is a backup way in; your email and passcode are enough from now on.</p>
   </section>
 
   <section class="card" data-needs-key>
-    <h2>📄 Resume</h2>
+    <h2>Resume</h2>
     <input id="file" type="file" accept="application/pdf" aria-label="Resume PDF">
     <button id="uploadBtn">Upload PDF</button>
     <div id="resumes" class="hint"></div>
   </section>
 
   <section class="card" data-needs-key id="insights" hidden>
-    <h2>🧠 From your resume</h2>
+    <h2>From your resume</h2>
     <div id="insightBody"></div>
     <button class="secondary" id="useRoles">Use these as my targets</button>
   </section>
 
   <section class="card" data-needs-key>
-    <h2>🎯 What you want</h2>
+    <h2>What you want</h2>
     <label for="titles">Target titles (one per line)</label><textarea id="titles" rows="3" placeholder="Backend Engineer"></textarea>
-    <label for="locations">Locations (one per line)</label><textarea id="locations" rows="2" placeholder="Bengaluru"></textarea>
-    <p class="hint">Remote jobs are kept only if open worldwide or to one of these places. Indian cities also match "India".</p>
-    <label><input type="checkbox" id="remoteOk" checked> Include remote roles</label>
-    <label><input type="checkbox" id="openToIndia" checked> Show other Indian cities (marked as relocation)</label>
-    <label><input type="checkbox" id="openToAbroad" checked> Show jobs abroad only if they offer visa sponsorship</label>
+    <label for="locations">Your cities (one per line)</label><textarea id="locations" rows="2" placeholder="Bengaluru"></textarea>
+    <label class="check"><input type="checkbox" id="remoteOk" checked> Include remote roles</label>
+    <label class="check"><input type="checkbox" id="openToIndia" checked> Show other Indian cities, marked as relocation</label>
+    <label class="check"><input type="checkbox" id="openToAbroad" checked> Show jobs abroad that offer visa sponsorship</label>
+    <label class="check"><input type="checkbox" id="abroadWithoutVisa"> Also show jobs abroad that do not mention a visa (flagged, ranked lower)</label>
     <label>Skip these levels</label>
     <div class="chips" id="levels"></div>
     <div class="row">
       <div><label for="yearsExperience">Your years of experience</label><input id="yearsExperience" type="number" min="0" max="50"></div>
       <div><label for="salaryFloor">Salary floor (LPA)</label><input id="salaryFloor" type="number" min="0" max="500" placeholder="e.g. 25"></div>
     </div>
-    <p class="hint">Jobs asking for more than 1 year above or below your experience are hidden. Roles from other fields (UI, test, embedded, mobile) and jobs that match too few of your skills are hidden too.</p>
-    <p class="hint">Floor in lakh rupees per year. Only applied to jobs that state a salary in LPA or lakhs. Jobs with no salary, or paid in other currencies, are kept.</p>
+    <p class="hint">Jobs asking for more than 1 year above or below your experience are hidden. So are roles from other fields (UI, test, embedded, mobile) and jobs that match too few of your skills.</p>
+    <p class="hint">The salary floor is in lakh rupees per year. It applies only to jobs that state a salary in LPA or lakhs; jobs with no salary, or paid in other currencies, are kept.</p>
     <button id="savePrefs">Save preferences</button>
   </section>
 
   <section class="card" data-needs-key>
-    <h2>🤖 AI provider (optional)</h2>
-    <p class="hint" id="llmState">Matching works without a key. A key is only stored for upcoming drafting features.</p>
+    <h2>Account</h2>
+    <p class="hint" id="accountState"></p>
+    <label for="newPasscode">New passcode (at least 6 characters)</label><input id="newPasscode" type="password" autocomplete="new-password">
+    <button class="secondary" id="savePasscode">Save passcode</button>
+  </section>
+
+  <section class="card" data-needs-key>
+    <h2>AI provider (optional)</h2>
+    <p class="hint" id="llmState"></p>
     <label for="provider">Provider</label><select id="provider"><option value="anthropic">anthropic</option></select>
     <label for="model">Model</label><input id="model" type="text" value="claude-sonnet-4-5">
     <label for="apiKey">API key</label><input id="apiKey" type="password" autocomplete="off">
@@ -137,16 +153,16 @@ a{color:var(--link);font-weight:700}
 <div>
   <section class="card" data-needs-key>
     <div class="bar">
-      <button id="runBtn" style="margin-top:0">Search for jobs</button>
+      <button id="runBtn">Search for jobs</button>
       <label for="threshold" style="margin:0">Minimum match</label>
       <input id="threshold" type="range" min="0" max="100" step="5" value="60" aria-describedby="thVal">
       <output id="thVal">60</output>
     </div>
-    <p class="hint">Scores above 80 are rare. Start around 50 to 60 and raise it if the list is too long.</p>
+    <p class="hint">Every job shown has already passed your hard filters. The score only ranks them.</p>
     <p class="hint" id="runState" role="status" aria-live="polite">No search run yet.</p>
   </section>
   <section class="card" data-needs-key>
-    <h2>🏆 Ranked matches</h2>
+    <h2>Ranked matches</h2>
     <div id="jobs"><div class="empty">Upload a resume, set your preferences, then search.</div></div>
   </section>
 </div>
@@ -157,15 +173,6 @@ a{color:var(--link);font-weight:700}
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let key = localStorage.getItem("jh_key") || "";
-
-function applyTheme(t){
-  document.documentElement.dataset.theme = t;
-  $("theme").textContent = t === "dark" ? "☀️" : "🌙";
-  $("theme").setAttribute("aria-label", t === "dark" ? "Switch to day mode" : "Switch to night mode");
-  $("theme").title = t === "dark" ? "Day mode" : "Night mode";
-}
-$("theme").onclick = () => { const n = document.documentElement.dataset.theme === "dark" ? "light" : "dark"; localStorage.setItem("jh_theme", n); applyTheme(n); };
-applyTheme(document.documentElement.dataset.theme || "light");
 
 function toast(msg){const t=$("toast");t.textContent=msg;t.style.display="block";clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display="none",5000)}
 async function api(path, opts={}){
@@ -182,37 +189,58 @@ async function api(path, opts={}){
 }
 const guard = fn => async (...a) => { try { await fn(...a) } catch (e) { toast(e.message) } };
 const lines = s => s.split("\n").map(x=>x.trim()).filter(Boolean);
-const LEVELS = ["intern","junior","senior","lead","staff","principal","manager","director"];
-$("levels").innerHTML = LEVELS.map(l => `<label class="chip" style="margin:0;cursor:pointer"><input type="checkbox" value="${l}"> ${l}</label>`).join("");
-const pickedLevels = () => [...document.querySelectorAll("#levels input:checked")].map(i => i.value);
 const numOrNull = id => $(id).value === "" ? null : Number($(id).value);
 
+/* theme */
+function applyTheme(t){
+  document.documentElement.dataset.theme = t;
+  $("theme").textContent = t === "dark" ? "Day mode" : "Night mode";
+  $("theme").setAttribute("aria-label", t === "dark" ? "Switch to day mode" : "Switch to night mode");
+}
+$("theme").onclick = () => { const n = document.documentElement.dataset.theme === "dark" ? "light" : "dark"; localStorage.setItem("jh_theme", n); applyTheme(n); };
+applyTheme(document.documentElement.dataset.theme || "light");
+
+/* signed in / out */
 function render(){
   const signedIn = !!key;
-  document.querySelectorAll("[data-needs-key]").forEach(e => e.hidden = !signedIn);
-  $("setup").hidden = signedIn; $("signout").hidden = !signedIn;
+  document.querySelectorAll("[data-needs-key]").forEach(e => { if (e.id !== "insights") e.hidden = !signedIn; });
+  if (!signedIn) $("insights").hidden = true;
+  $("auth").hidden = signedIn; $("signout").hidden = !signedIn;
 }
+function setTab(t){
+  const isIn = t === "in";
+  $("paneIn").hidden = !isIn; $("paneNew").hidden = isIn;
+  $("tabIn").setAttribute("aria-selected", isIn); $("tabNew").setAttribute("aria-selected", !isIn);
+}
+$("tabIn").onclick = () => setTab("in"); $("tabNew").onclick = () => setTab("new");
+function startSession(k){ key = k; localStorage.setItem("jh_key", k); render(); }
 
-$("setupBtn").onclick = guard(async () => {
-  const r = await api("/setup", {method:"POST", json:{name:$("name").value, email:$("email").value}});
-  key = r.apiKey; localStorage.setItem("jh_key", key);
-  $("keyShown").textContent = key; $("keyCard").hidden = false;
-  render(); await loadAll();
+$("signInBtn").onclick = guard(async () => {
+  const r = await api("/login", {method:"POST", json:{email:$("inEmail").value, passcode:$("inPass").value}});
+  $("inPass").value = ""; startSession(r.apiKey); await loadAll();
 });
-$("haveKey").onclick = e => { e.preventDefault(); const k = prompt("Paste your API key"); if (k) { key = k.trim(); localStorage.setItem("jh_key", key); render(); guard(loadAll)(); } };
-$("signout").onclick = () => { localStorage.removeItem("jh_key"); key = ""; $("keyCard").hidden = true; render(); };
+$("setupBtn").onclick = guard(async () => {
+  const r = await api("/setup", {method:"POST", json:{name:$("name").value, email:$("email").value, passcode:$("newPass").value}});
+  $("newPass").value = ""; $("keyShown").textContent = r.apiKey; $("keyCard").hidden = false;
+  startSession(r.apiKey); await loadAll();
+});
+for (const [id, btn] of [["inEmail","signInBtn"],["inPass","signInBtn"],["name","setupBtn"],["email","setupBtn"],["newPass","setupBtn"]])
+  $(id).addEventListener("keydown", e => { if (e.key === "Enter") $(btn).click(); });
+$("haveKey").onclick = e => { e.preventDefault(); const k = prompt("Paste your access key"); if (k) { startSession(k.trim()); guard(loadAll)(); } };
+$("signout").onclick = () => { localStorage.removeItem("jh_key"); key = ""; $("keyCard").hidden = true; render(); setTab("in"); };
 
+/* resume */
 let latest = null;
 function renderInsights(r){
   latest = r;
-  $("insights").hidden = !r;
+  $("insights").hidden = !r || !key;
   if (!r) return;
   const p = r.parsed, chips = (a, c) => (a||[]).map(x => `<span class="chip ${c}">${esc(x)}</span>`).join("");
   $("insightBody").innerHTML =
-    `<p style="margin:.2rem 0"><strong>${p.yearsExperience ? "About " + p.yearsExperience + " years" : "Experience not detected"}</strong>${p.seniority ? ", " + esc(p.seniority) : ""}</p>` +
-    ((p.suggestedRoles||[]).length ? `<h4 style="margin:.7rem 0 .2rem;font-size:.9rem">Roles that fit</h4><div class="chips">${chips(p.suggestedRoles,"ok")}</div>`
+    `<p style="margin:.2rem 0"><strong>${p.yearsExperience ? "About " + p.yearsExperience + " years of experience" : "Experience not detected"}</strong>${p.seniority ? ", " + esc(p.seniority) : ""}</p>` +
+    ((p.suggestedRoles||[]).length ? `<h4 class="sub">Roles that fit</h4><div class="chips">${chips(p.suggestedRoles,"ok")}</div>`
       : `<p class="hint">Not enough recognized skills to suggest roles. Add titles yourself below.</p>`) +
-    `<h4 style="margin:.7rem 0 .2rem;font-size:.9rem">Skills found (${(p.skills||[]).length})</h4><div class="chips">${chips(p.skills,"")}</div>` +
+    `<h4 class="sub">Skills found (${(p.skills||[]).length})</h4><div class="chips">${chips(p.skills,"")}</div>` +
     `<p class="hint">Estimated from dates and keywords on the resume, so check it.</p>`;
   $("useRoles").hidden = !(p.suggestedRoles||[]).length;
 }
@@ -236,17 +264,24 @@ $("uploadBtn").onclick = guard(async () => {
   toast("Resume uploaded. Check the suggested titles, then save preferences.");
 });
 
+/* preferences */
+const LEVELS = ["intern","junior","senior","lead","staff","principal","manager","director","architect"];
+$("levels").innerHTML = LEVELS.map(l => `<label class="chip" style="margin:0;cursor:pointer;display:inline-flex;gap:.3rem;align-items:center"><input type="checkbox" value="${l}"> ${l}</label>`).join("");
+const pickedLevels = () => [...document.querySelectorAll("#levels input:checked")].map(i => i.value);
 async function loadPrefs(){
   const p = await api("/preferences");
   $("titles").value = p.targetTitles.join("\n"); $("locations").value = p.locations.join("\n");
   $("remoteOk").checked = p.remoteOk; $("openToIndia").checked = p.openToIndia; $("openToAbroad").checked = p.openToAbroad;
+  $("abroadWithoutVisa").checked = p.abroadWithoutVisa;
   document.querySelectorAll("#levels input").forEach(i => i.checked = (p.excludedLevels||[]).includes(i.value));
   for (const k of ["yearsExperience","salaryFloor"]) $(k).value = p[k] ?? "";
   $("threshold").value = p.minMatchScore; $("thVal").textContent = p.minMatchScore;
 }
 $("savePrefs").onclick = guard(async () => {
   await api("/preferences", {method:"PUT", json:{targetTitles:lines($("titles").value), locations:lines($("locations").value),
-    remoteOk:$("remoteOk").checked, yearsExperience:numOrNull("yearsExperience"), salaryFloor:numOrNull("salaryFloor"), excludedLevels:pickedLevels(), openToIndia:$("openToIndia").checked, openToAbroad:$("openToAbroad").checked}});
+    remoteOk:$("remoteOk").checked, yearsExperience:numOrNull("yearsExperience"), salaryFloor:numOrNull("salaryFloor"),
+    excludedLevels:pickedLevels(), openToIndia:$("openToIndia").checked, openToAbroad:$("openToAbroad").checked,
+    abroadWithoutVisa:$("abroadWithoutVisa").checked}});
   toast("Preferences saved. Run a search to apply them.");
 });
 
@@ -254,21 +289,33 @@ let thTimer;
 $("threshold").oninput = () => { $("thVal").textContent = $("threshold").value; clearTimeout(thTimer);
   thTimer = setTimeout(guard(async () => { await api("/settings/matching", {method:"PUT", json:{minMatchScore:Number($("threshold").value)}}); await loadJobs(); }), 400); };
 
+/* account and AI key */
+async function loadAccount(){
+  const a = await api("/account");
+  $("accountState").textContent = a.hasPasscode ? `Signed in as ${a.email}. A sign-in passcode is set.`
+    : `Signed in as ${a.email}. No passcode is set, so you cannot sign in on another device. Set one below.`;
+}
+$("savePasscode").onclick = guard(async () => {
+  await api("/account/passcode", {method:"PUT", json:{passcode:$("newPasscode").value}});
+  $("newPasscode").value = ""; await loadAccount(); toast("Passcode saved");
+});
 async function loadLlm(){
   const s = await api("/settings/llm");
-  $("llmState").textContent = s.configured ? `Saved: ${s.provider}, ${s.model}, key ending ${s.keyHint.replace("...","")}` : "Matching works without a key. A key is only stored for upcoming drafting features.";
+  $("llmState").textContent = s.configured ? `Saved: ${s.provider}, ${s.model}, key ending ${s.keyHint.replace("...","")}. The key is stored encrypted and never shown again.`
+    : "Nothing in the app uses an AI key yet, so you can leave this empty.";
 }
 $("saveLlm").onclick = guard(async () => {
   await api("/settings/llm", {method:"PUT", json:{provider:$("provider").value, model:$("model").value, apiKey:$("apiKey").value}});
   $("apiKey").value = ""; await loadLlm(); toast("Key saved (encrypted)");
 });
 
+/* search */
 $("runBtn").onclick = guard(async () => {
   $("runBtn").disabled = true;
   try {
     let run = await api("/search-runs", {method:"POST"});
     while (run.status === "QUEUED" || run.status === "RUNNING") {
-      $("runState").textContent = "Searching… " + run.status.toLowerCase();
+      $("runState").textContent = "Searching: " + run.status.toLowerCase();
       await new Promise(r => setTimeout(r, 1200));
       run = await api("/search-runs/" + run.id);
     }
@@ -276,13 +323,13 @@ $("runBtn").onclick = guard(async () => {
     let msg;
     if (run.status === "FAILED") msg = "Search failed. " + (run.error||"") + " " + failed.join(" ");
     else {
-      msg = `${run.jobsMatched > 0 ? "🎉 " : ""}Found ${run.jobsFound} jobs. ${run.eligible ?? "?"} passed your filters, ${run.jobsMatched} score ${run.minScore}+.`;
-      const f = run.filteredOut || {}, names = {title:"title", location:"location", remote:"remote off", salary:"salary", level:"seniority", role:"off-profile role", visa:"abroad without visa", years:"experience mismatch", skills:"too few matching skills"};
-      const parts = Object.keys(f).map(k => `${names[k]} ${f[k]}`);
+      msg = `Found ${run.jobsFound} jobs. ${run.eligible ?? "?"} passed your filters, ${run.jobsMatched} score ${run.minScore}+.`;
+      const f = run.filteredOut || {}, names = {title:"title", role:"other field", level:"seniority", location:"location", remote:"remote off", visa:"abroad without visa", years:"experience", skills:"too few matching skills", salary:"salary"};
+      const parts = Object.keys(f).map(k => `${names[k] || k} ${f[k]}`);
       if (parts.length) msg += " Filtered out by: " + parts.join(", ") + ".";
       if (run.eligible > 0 && run.jobsMatched === 0) msg += " Lower the minimum match to see them.";
       else if (run.eligible === 0 && f.title) msg += " Try broader target titles, such as Software Engineer.";
-      else if (run.eligible === 0 && (f.location || f.remote)) msg += " Check locations and the remote option.";
+      else if (run.eligible === 0 && (f.location || f.remote || f.visa)) msg += " Check your cities and the abroad options.";
       if (failed.length) msg += " Some sources failed: " + failed.join(" ");
     }
     $("runState").textContent = msg;
@@ -294,28 +341,31 @@ async function loadJobs(){
   const jobs = await api("/jobs?limit=200");
   $("jobs").innerHTML = jobs.length ? jobs.map(jobHtml).join("") : '<div class="empty">No matches at this threshold. Lower the minimum match, widen your titles, or run a search.</div>';
 }
-const MODE_SHORT = {same_city:"📍 In your city", india_other_city:"🧳 Relocate within India", remote_india:"🏠 Remote, India", remote_worldwide:"🌍 Remote", abroad_visa:"🛂 Abroad, visa offered"};
+const MODE_SHORT = {same_city:"In your city", india_other_city:"Relocate within India", remote_india:"Remote, India", remote_worldwide:"Remote", abroad_visa:"Abroad, visa offered", abroad_no_visa:"Abroad, no visa mentioned"};
 const VISA_TEXT = {YES:"Visa sponsorship or relocation support is offered.", NO:"The posting says it will not sponsor a visa.", UNKNOWN:"Visa sponsorship is not mentioned."};
 function jobHtml(j){
-  const m = j.match;
+  const m = j.match, tier = m.score >= 80 ? "hi" : m.score >= 65 ? "mid" : "lo";
   const chips = (arr, cls) => arr.map(s => `<span class="chip ${cls}">${esc(s)}</span>`).join("");
+  const where = j.remote ? (j.location && !/remote/i.test(j.location) ? j.location + " (remote)" : "Remote") : (j.location || "Location not listed");
+  const modeChip = m.workMode && MODE_SHORT[m.workMode] ? `<span class="chip ${m.workMode === "abroad_no_visa" || m.relocation ? "warn" : "ok"}">${MODE_SHORT[m.workMode]}</span>` : "";
+  const warnChip = (j.warnings||[]).length ? '<span class="chip warn">Check listing</span>' : "";
   return `<details class="job"><summary>
-    <div class="score ${m.score >= 80 ? "hi" : m.score >= 65 ? "mid" : "lo"}" style="--s:${m.score}"><span>${m.score}</span></div>
-    <div><h3>${esc(j.title)} ${j.fixture ? '<span class="chip fixture">Fixture</span>' : ""}${(j.warnings||[]).length ? ' <span class="chip warn" title="See details">Check listing</span>' : ""}</h3>
-    ${m.workMode && MODE_SHORT[m.workMode] ? `<div class="chips"><span class="chip ${m.relocation ? "warn" : "ok"}">${MODE_SHORT[m.workMode]}</span></div>` : ""}
-    <div class="meta">${esc(j.company)}, ${esc(j.remote ? (j.location && !/remote/i.test(j.location) ? j.location + " (remote)" : "Remote") : j.location || "Location not listed")}</div></div></summary>
+    <div class="score ${tier}"><b>${m.score}</b><i style="--s:${m.score}%"></i></div>
+    <div><h3>${esc(j.title)}</h3>
+    <div class="meta">${esc(j.company)}, ${esc(where)}</div>
+    <div class="chips">${modeChip}${warnChip}${j.fixture ? '<span class="chip warn">Demo data</span>' : ""}</div></div></summary>
     <div class="detail">
-      ${m.workLabel ? `<h4>Where you would work</h4><div class="hint ${m.relocation ? "warnline" : ""}">${esc(m.workLabel)}</div>${m.workMode === "abroad_visa" || m.visa === "NO" ? `<div class="hint">${VISA_TEXT[m.visa] || ""}</div>` : ""}` : ""}
+      ${m.workLabel ? `<h4>Where you would work</h4><div class="${m.relocation ? "warnline" : ""}">${esc(m.workLabel)}</div>${m.workMode === "abroad_visa" || m.visa === "NO" ? `<div class="hint">${VISA_TEXT[m.visa] || ""}</div>` : ""}` : ""}
       <h4>Matched skills</h4><div class="chips">${chips(m.matchedSkills,"ok") || '<span class="hint">None recognized</span>'}</div>
       <h4>Missing from your resume</h4><div class="chips">${chips(m.missingRequirements,"miss") || '<span class="hint">Nothing missing</span>'}</div>
       ${m.evidence.length ? "<h4>Evidence in the posting</h4>" + m.evidence.map(e => `<blockquote>${esc(e)}</blockquote>`).join("") : ""}
-      ${(j.warnings||[]).length ? "<h4>Listing warnings</h4>" + j.warnings.map(w => `<div class="hint warnline">${esc(w)}</div>`).join("") : ""}
+      ${(j.warnings||[]).length ? "<h4>Listing warnings</h4>" + j.warnings.map(w => `<div class="warnline">${esc(w)}</div>`).join("") : ""}
       ${m.uncertainty.length ? "<h4>Things to check</h4>" + m.uncertainty.map(u => `<div class="hint">${esc(u)}</div>`).join("") : ""}
       <p><a href="${esc(j.url)}" target="_blank" rel="noopener noreferrer">Open the listing</a> <span class="hint">${j.postedAt ? "posted " + esc(new Date(j.postedAt).toLocaleDateString()) + ", " : ""}via ${esc(j.source)}</span></p>
     </div></details>`;
 }
 
-async function loadAll(){ await loadPrefs(); await Promise.all([loadResumes(), loadLlm()]); await loadJobs(); }
+async function loadAll(){ await loadPrefs(); await Promise.all([loadResumes(), loadLlm(), loadAccount()]); await loadJobs(); }
 render(); if (key) guard(loadAll)();
 </script>
 </body>
